@@ -7,7 +7,7 @@
 
 #include <fmt/printf.h>
 
-BlockType::BlockType(std::string name, Color color) : name(std::move(name)), color(color) { }
+BlockType::BlockType(std::string name, Color color, bool solid) : name(std::move(name)), color(color), solid(solid) { }
 
 Block::Block(Child *parent, const BlockType &type, float x, float y, float width, float height)
     : Child(parent), type(type) {
@@ -16,6 +16,7 @@ Block::Block(Child *parent, const BlockType &type, float x, float y, float width
 }
 
 namespace blocks {
+    BlockType air = { "Air", Color(0xFFFFFF), false };
     BlockType stone = { "Stone", Color(0xA3A19B) };
     BlockType grass = { "Grass", Color(0xD0E831) };
     BlockType dirt = { "Dirt", Color(0xBF8B2A) };
@@ -30,7 +31,7 @@ namespace blocks {
         auto a = [width](size_t x, size_t y) { return x + y * width; };
 
         for (size_t x = 0; x < width; x++) {
-            blocks[a(x, 0)] = &grass;
+            blocks[a(x, 0)] = &air;
 
             for (size_t y = 1; y < 5; y++)
                 blocks[a(x, y)] = &dirt;
@@ -46,7 +47,7 @@ void World::makeBodies() {
     auto a = [this](size_t x, size_t y) { return x + y * width; };
 
     std::vector<bool> taken(width * height);
-    std::transform(blocks.begin(), blocks.end(), taken.begin(), [](const auto &e) { return !e->type.solid; });
+    std::transform(blocks.begin(), blocks.end(), taken.begin(), [](const auto &e) { return !e || !e->type.solid; });
 
     for (size_t y = 0; y < height; y++) {
         for (size_t x = 0; x < width; x++) {
@@ -76,8 +77,6 @@ void World::makeBodies() {
                     break;
             }
 
-            fmt::print("Block {}, {} -> {}, {}\n", x, y, w, h);
-
             for (size_t ow = 0; ow < width; ow++) {
                 for (size_t oh = 0; oh < height; oh++) {
                     assert(!taken[a(x + ow, y + oh)]);
@@ -89,7 +88,9 @@ void World::makeBodies() {
             constexpr float blockSize = 1.2;
 
             // only one block long and tall
-            bodies.push_back(hold<parts::BoxBody>(x * blockSize, -y * blockSize, blockSize, blockSize));
+            bodies.push_back(hold<parts::BoxBody>(
+                x * blockSize + w * blockSize / 2 - blockSize / 2, -y * blockSize - h * blockSize / 2 + blockSize / 2,
+                blockSize * w, blockSize * h));
 
             x += w;
         }

@@ -19,9 +19,12 @@ struct Handle {
 
     operator GLuint() const;
 
+    Handle &operator =(Handle &&o) noexcept;
+
     Handle(const Handle &o) = delete;
     Handle(Handle &&o) noexcept;
 
+    Handle() = default;
     Handle(GLuint value, Deleter deleter);
     Handle(const PointerModifier &onCreate, const PointerModifier &onDelete);
 

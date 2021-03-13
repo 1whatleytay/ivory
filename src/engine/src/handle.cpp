@@ -28,8 +28,17 @@ Handle::operator GLuint() const {
     return value;
 }
 
+Handle &Handle::operator =(Handle &&o) noexcept {
+    reset(o.value, std::move(o.deleter));
+
+    o.value = 0;
+
+    return *this;
+}
+
 Handle::Handle(Handle &&o) noexcept {
-    value = o.value;
+    reset(o.value, std::move(o.deleter));
+
     o.value = 0;
 }
 

@@ -17,6 +17,8 @@ struct Engine {
     GLFWwindow *window = nullptr;
     b2World world;
 
+    Handle program;
+
     GLint offsetUniform;
     GLint scaleUniform;
 
@@ -52,14 +54,30 @@ struct Resource {
 
 template <typename T>
 struct Holder {
-    Child *parent;
-    T *value;
+    T *value = nullptr;
+    Child *parent = nullptr;
 
     T *operator ->() { return value; }
-    operator T *() { return value; }
 
+    void reset(Child *parent, T *value);
+
+    Holder<T> &operator =(Holder<T> &&o) noexcept {
+        reset(o.parent, o.value);
+
+        o.value = nullptr;
+        o.parent = nullptr;
+    }
+
+    Holder(Holder &&o) noexcept {
+        reset(o.parent, o.value);
+
+        o.value = nullptr;
+        o.parent = nullptr;
+    }
+
+    Holder(const Holder &holder) = delete;
     Holder(Child *parent, T *value) : parent(parent), value(value) { }
-    ~Holder();
+    ~Holder() { reset(nullptr, nullptr); }
 };
 
 struct Child {
@@ -158,6 +176,10 @@ struct Child {
 };
 
 template <typename T>
-Holder<T>::~Holder() {
-    parent->drop(value);
+void Holder<T>::reset(Child *p, T *v) {
+    if (parent && value)
+        parent->drop(value);
+
+    value = v;
+    parent = p;
 }

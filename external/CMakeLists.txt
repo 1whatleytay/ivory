@@ -1,8 +1,8 @@
-set(BOX2D_BUILD_TESTBED OFF)
-set(BOX2D_BUILD_UNIT_TESTS OFF)
+set(BOX2D_BUILD_TESTBED OFF CACHE BOOL "Build the Box2D testbed")
+set(BOX2D_BUILD_UNIT_TESTS OFF CACHE BOOL "Build the Box2D unit tests")
 
-set(GLFW_INSTALL OFF)
-set(GLFW_BUILD_DOCS OFF)
+set(GLFW_INSTALL OFF CACHE BOOL "Generate installation target")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "Build the GLFW documentation")
 
 add_subdirectory(fmt)
 add_subdirectory(glad)

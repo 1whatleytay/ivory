@@ -16,7 +16,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Ores", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Pizza", nullptr, nullptr);
     if (!window)
         throw std::exception();
 

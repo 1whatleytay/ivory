@@ -8,7 +8,7 @@ struct BlockType {
 
     bool solid = true;
 
-    BlockType(std::string name, Color color);
+    BlockType(std::string name, Color color, bool solid = true);
 };
 
 struct Block : public Child {

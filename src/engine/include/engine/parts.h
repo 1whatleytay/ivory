@@ -3,6 +3,8 @@
 #include <engine/handle.h>
 #include <engine/engine.h>
 
+#include <optional>
+
 namespace parts {
     struct Buffer;
 

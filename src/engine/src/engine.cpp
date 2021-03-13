@@ -58,6 +58,7 @@ namespace {
         verify(fragShader);
 
         Handle program(glCreateProgram(), glDeleteProgram);
+
         glAttachShader(program, vertShader);
         glAttachShader(program, fragShader);
         glLinkProgram(program);
@@ -164,7 +165,7 @@ Engine::Engine(GLFWwindow *window) : window(window), world(b2Vec2(0.0f, -10.0f))
         reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window))->scale(width, height);
     });
 
-    Handle program = loadShaderProgram();
+    program = loadShaderProgram();
     glUseProgram(program);
 
     offsetUniform = glGetUniformLocation(program, "offset");
