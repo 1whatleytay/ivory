@@ -5,7 +5,7 @@
 
 #include <fmt/printf.h>
 
-int main() {
+int main(int count, const char **args) {
     fmt::print("Starting.\n");
 
     if (!glfwInit())
@@ -26,6 +26,23 @@ int main() {
 
     if (!gladLoadGL())
         throw std::exception();
+
+    if (count > 1) {
+        Engine::assets = args[1];
+    } else if (count == 1) {
+        std::string path(args[0]);
+
+        auto x = path.rfind('/');
+        if (x != std::string::npos)
+            path = path.substr(0, x);
+
+        Engine::assets = path + "/assets";
+    } else {
+        Engine::assets = "assets";
+    }
+
+    if (Engine::assets[Engine::assets.size() - 1] != '/')
+        Engine::assets += '/';
 
     Engine(window).run<Game>();
 

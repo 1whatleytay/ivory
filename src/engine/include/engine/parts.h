@@ -8,19 +8,19 @@
 namespace parts {
     struct Buffer;
 
-    struct Range {
+    struct BufferRange {
         Buffer *parent = nullptr;
-        std::unique_ptr<Buffer> owned;
+        std::shared_ptr<Buffer> owned;
 
         [[nodiscard]] Buffer *get() const;
 
         size_t begin = 0, size = 0;
 
         void draw() const;
-        void write(void *data) const;
+        BufferRange &write(void *data);
 
-        Range(Buffer *buffer, size_t begin, size_t size);
-        Range(std::unique_ptr<Buffer> owned, size_t begin, size_t size);
+        BufferRange(Buffer *parent, size_t begin, size_t size);
+        BufferRange(std::unique_ptr<Buffer> owned, size_t begin, size_t size);
     };
 
     struct Buffer : public Resource {
@@ -33,9 +33,41 @@ namespace parts {
 
         void bind() const;
 
-        Range grab(size_t count);
+        BufferRange grab(size_t count);
 
-        explicit Buffer(Child *component, size_t vertices);
+        Buffer(Child *component, size_t vertices);
+    };
+
+    struct Texture;
+
+    struct TextureRange {
+        Texture *parent;
+        std::shared_ptr<Texture> owned;
+
+        [[nodiscard]] Texture *get() const;
+
+        size_t x, y;
+        size_t w, h;
+
+        TextureRange &write(void *data);
+
+        TextureRange(Texture *parent, size_t x, size_t y, size_t w, size_t h);
+        TextureRange(std::unique_ptr<Texture> owned, size_t x, size_t y, size_t w, size_t h);
+    };
+
+    struct Texture : public Resource {
+        size_t width, height;
+
+        std::vector<bool> taken;
+
+        Handle texture;
+        Handle sampler;
+
+        void bind() const;
+
+        TextureRange grab(size_t w, size_t h);
+
+        Texture(Child *component, size_t width, size_t height);
     };
 
     struct BoxBody : public Child {
@@ -54,10 +86,11 @@ namespace parts {
     };
 
     struct BoxVisual : public Child {
-        Range range;
+        BufferRange range;
+        const TextureRange *tex = nullptr;
 
-        void set(float x, float y, float width, float height, const Color &color) const;
-        void set(const BoxBody &body, const Color &color) const;
+        void set(float x, float y, float width, float height, const TextureRange &texture);
+        void set(const BoxBody &body, const TextureRange &texture);
 
         void draw() override;
 
@@ -68,10 +101,17 @@ namespace parts {
         BoxBody *body;
         BoxVisual *visual;
 
-        Color color;
+        TextureRange texture;
+
+        bool alive = true;
 
         void update(float time) override;
 
         explicit Box(Child *parent, float x, float y, float width, float height, Color color, float weight = 0);
+        explicit Box(Child *parent, float x, float y, float width, float height, TextureRange texture, float weight = 0);
     };
+
+    namespace shapes {
+        std::array<Vertex, 6> square(float x, float y, float width, float height, const TextureRange &texture);
+    }
 }

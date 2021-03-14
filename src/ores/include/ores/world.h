@@ -4,19 +4,28 @@
 
 struct BlockType {
     std::string name;
-    Color color;
+    std::string path;
 
     bool solid = true;
 
-    BlockType(std::string name, Color color, bool solid = true);
+    BlockType(std::string name, std::string path, bool solid = true);
 };
 
 struct Block : public Child {
     const BlockType &type;
+    const parts::TextureRange &texture;
+
+    float x, y;
 
     parts::BoxVisual *visual;
 
-    Block(Child *parent, const BlockType &type, float x, float y, float width, float height);
+    float progress = 0;
+    bool isBreaking = false;
+
+    void update(float time) override;
+    void click(int button, int action) override;
+
+    Block(Child *parent, const BlockType &type, const parts::TextureRange &texture, float x, float y);
 };
 
 struct World : public Child {
@@ -24,6 +33,12 @@ struct World : public Child {
 
     std::vector<Block *> blocks;
     std::vector<Holder<parts::BoxBody>> bodies;
+
+    std::vector<Block *> destroy;
+
+    std::unordered_map<const BlockType *, parts::TextureRange> textures;
+
+    void update(float time) override;
 
     void makeBodies();
 

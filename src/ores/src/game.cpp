@@ -5,7 +5,8 @@
 #include <ores/player.h>
 
 Game::Game(Engine &engine) : Child(engine) {
-    create<parts::Buffer>(600);
+    supply<parts::Buffer>(600);
+    supply<parts::Texture>(200, 200);
 
     make<Camera>();
 

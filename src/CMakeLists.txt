@@ -3,3 +3,6 @@ add_subdirectory(engine)
 
 add_executable(game main.cpp)
 target_link_libraries(game PRIVATE ores)
+
+add_executable(noise noise.cpp)
+target_link_libraries(noise PRIVATE stb)

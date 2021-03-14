@@ -1,25 +1,27 @@
 #include <engine/parts.h>
 
 namespace parts {
-    void Range::draw() const {
+    void BufferRange::draw() const {
         get()->bind();
 
         glDrawArrays(GL_TRIANGLES, begin, size);
     }
 
-    void Range::write(void *data) const {
+    BufferRange &BufferRange::write(void *data) {
         get()->bind();
 
         glBufferSubData(GL_ARRAY_BUFFER, begin * sizeof(Vertex), size * sizeof(Vertex), data);
+
+        return *this;
     }
 
-    Buffer *Range::get() const {
+    Buffer *BufferRange::get() const {
         return owned ? owned.get() : parent;
     }
 
-    Range::Range(Buffer *parent, size_t begin, size_t size)
+    BufferRange::BufferRange(Buffer *parent, size_t begin, size_t size)
         : parent(parent), begin(begin), size(size) { }
-    Range::Range(std::unique_ptr<Buffer> owned, size_t begin, size_t size)
+    BufferRange::BufferRange(std::unique_ptr<Buffer> owned, size_t begin, size_t size)
         : owned(std::move(owned)), begin(begin), size(size) { }
 
     void Buffer::bind() const {
@@ -27,14 +29,18 @@ namespace parts {
         glBindVertexArray(vao);
     }
 
-    Range Buffer::grab(size_t count) {
-        if (allocated + count > vertices)
-            return Range(std::make_unique<Buffer>(component, count), 0, count);
+    BufferRange Buffer::grab(size_t count) {
+        if (allocated + count > vertices) {
+            auto owned = std::make_unique<Buffer>(component, count);
+            owned->allocated = count;
+
+            return BufferRange(std::move(owned), 0, count);
+        }
 
         size_t start = allocated;
         allocated += count;
 
-        return Range(this, start, count);
+        return BufferRange(this, start, count);
     }
 
     Buffer::Buffer(Child *component, size_t vertices) : Resource(component), vertices(vertices),
@@ -45,17 +51,88 @@ namespace parts {
         Vertex::mark();
     }
 
-    void BoxVisual::set(float x, float y, float width, float height, const Color &color) const {
-        range.write(shapes::square(x - width / 2, y - height / 2, width, height, color).data());
+    Texture *TextureRange::get() const {
+        return owned ? owned.get() : parent;
     }
 
-    void BoxVisual::set(const BoxBody &body, const Color &color) const {
+    TextureRange &TextureRange::write(void *data) {
+        get()->bind();
+
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+        return *this;
+    }
+
+    TextureRange::TextureRange(Texture *parent, size_t x, size_t y, size_t w, size_t h)
+        : parent(parent), x(x), y(y), w(w), h(h) { }
+    TextureRange::TextureRange(std::unique_ptr<Texture> owned, size_t x, size_t y, size_t w, size_t h)
+        : owned(std::move(owned)), x(x), y(y), w(w), h(h) { }
+
+    TextureRange Texture::grab(size_t w, size_t h) {
+        for (size_t x = 0; x < width; x++) {
+            for (size_t y = 0; y < height; y++) {
+                bool blocked = false;
+
+                for (size_t ox = 0; ox < w; ox++) {
+                    for (size_t oy = 0; oy < h; oy++) {
+                        if (taken[(x + ox) + (y + oy) * width]) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+
+                    if (blocked)
+                        break;
+                }
+
+                if (!blocked) {
+                    for (size_t ox = 0; ox < w; ox++) {
+                        for (size_t oy = 0; oy < h; oy++) {
+                            taken[(x + ox) + (y + oy) * width] = true;
+                        }
+                    }
+
+                    return TextureRange(this, x, y, w, h);
+                }
+            }
+        }
+
+        auto owned = std::make_unique<Texture>(component, w, h);
+        std::fill(owned->taken.begin(), owned->taken.end(), true);
+
+        return TextureRange(std::move(owned), 0, 0, w, h);
+    }
+
+    void Texture::bind() const {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindSampler(0, sampler);
+    }
+
+    Texture::Texture(Child *component, size_t width, size_t height) : Resource(component),
+        width(height), height(height), taken(width * height),
+        texture(glGenTextures, glDeleteTextures), sampler(glGenSamplers, glDeleteSamplers) {
+
+        bind();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
+    void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture) {
+        tex = &texture;
+
+        range.write(shapes::square(x, y, width, height, texture).data());
+    }
+
+    void BoxVisual::set(const BoxBody &body, const TextureRange &texture) {
         auto pos = body.value->GetPosition();
 
-        set(pos.x, pos.y, body.width, body.height, color);
+        set(pos.x, pos.y, body.width, body.height, texture);
     }
 
     void BoxVisual::draw() {
+        tex->get()->bind();
         range.draw();
     }
 
@@ -116,15 +193,57 @@ namespace parts {
 
     void Box::update(float time) {
         // No need to bother redrawing to buffer if its static.
-        if (!body->isGround())
-            visual->set(*body, color);
+        if (alive)
+            visual->set(*body, texture);
     }
 
     Box::Box(Child *parent, float x, float y, float width, float height, Color color, float weight)
-        : Child(parent), color(color) {
+        : Child(parent), texture(std::move(get<parts::Texture>(1, 1)->grab(1, 1).write(color.data().data()))) {
         visual = make<BoxVisual>();
         body = make<BoxBody>(x, y, width, height, weight);
 
-        visual->set(*body, color);
+        alive = !body->isGround();
+
+        visual->set(*body, this->texture);
+    }
+
+    Box::Box(Child *parent, float x, float y, float width, float height, TextureRange texture, float weight)
+        : Child(parent), texture(std::move(texture)) {
+        visual = make<BoxVisual>();
+        body = make<BoxBody>(x, y, width, height, weight);
+
+        alive = !body->isGround();
+
+        visual->set(*body, this->texture);
+    }
+
+    namespace shapes {
+        std::array<Vertex, 6> square(float x, float y, float width, float height, const TextureRange &texture) {
+            Position bottomLeftPos = { x - width / 2, y - height / 2 };
+            Position bottomRightPos = { x + width / 2, y - height / 2 };
+            Position topLeftPos = { x - width / 2, y + height / 2 };
+            Position topRightPos = { x + width / 2, y + height / 2 };
+
+            float tw = texture.get()->width;
+            float th = texture.get()->height;
+
+            float shiftX = 1 / (tw * 100);
+            float shiftY = 1 / (th * 100);
+
+            Position bottomLeftTex = { texture.x / tw + shiftX, (texture.y + texture.h) / th - shiftY };
+            Position bottomRightTex = { (texture.x + texture.w) / tw - shiftX, (texture.y + texture.h) / th - shiftY };
+            Position topLeftTex = { texture.x / tw + shiftX, texture.y / th + shiftY };
+            Position topRightTex = { (texture.x + texture.w) / tw - shiftX, texture.y / th + shiftY };
+
+            Vertex bottomLeft = { bottomLeftPos, bottomLeftTex };
+            Vertex bottomRight = { bottomRightPos, bottomRightTex };
+            Vertex topLeft = { topLeftPos, topLeftTex };
+            Vertex topRight = { topRightPos, topRightTex };
+
+            return {
+                bottomRight, topLeft, bottomLeft,
+                bottomRight, topRight, topLeft
+            };
+        }
     }
 }

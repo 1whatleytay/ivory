@@ -1,7 +1,7 @@
 #pragma once
 
 #include <engine/handle.h>
-#include <engine/shapes.h>
+#include <engine/vertex.h>
 
 #include <GLFW/glfw3.h>
 #include <box2d/box2d.h>
@@ -14,6 +14,8 @@
 struct Child;
 
 struct Engine {
+    static std::string assets;
+
     GLFWwindow *window = nullptr;
     b2World world;
 
@@ -28,8 +30,11 @@ struct Engine {
 
     Color sky;
 
+    float zoom = 80;
+
     void key(int key, int action) const;
     void scale(int width, int height) const;
+    void click(int button, int action) const;
 
     void execute();
 
@@ -95,10 +100,12 @@ struct Child {
 
     virtual void draw();
     virtual void update(float time);
+    virtual void click(int button, int action);
     virtual void keyboard(int key, int action);
 
     void engineDraw();
     void engineUpdate(float time);
+    void engineClick(int button, int action);
     void engineKeyboard(int key, int action);
 
     template <typename T, typename ...Args>
@@ -138,7 +145,12 @@ struct Child {
     T *find() { return dynamic_cast<T *>(find(typeid(T).hash_code())); }
 
     template <typename T, typename ...Args>
-    T *create(const Args &... args) {
+    std::unique_ptr<T> create(const Args &... args) {
+        return std::make_unique<T>(this, args...);
+    }
+
+    template <typename T, typename ...Args>
+    T *supply(const Args &... args) {
         auto c = std::make_unique<T>(this, args...);
 
         T *x = c.get();
@@ -151,7 +163,7 @@ struct Child {
     T *get(const Args &... args) {
         auto *z = find<T>();
 
-        return z ? z : create<T>(args...);
+        return z ? z : supply<T>(args...);
     }
 
     template <typename T>

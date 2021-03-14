@@ -17,17 +17,15 @@ struct Position {
 struct Color {
     float red = 0, green = 0, blue = 0;
 
+    std::array<uint8_t, 4> data() const;
+
     Color() = default;
     explicit Color(uint32_t color);
 };
 
 struct Vertex {
     Position position;
-    Color color;
+    Position texCoord;
 
     static void mark();
 };
-
-namespace shapes {
-    std::array<Vertex, 6> square(float x, float y, float width, float height, const Color &color);
-}

@@ -23,8 +23,8 @@ namespace {
             return buffer.str();
         };
 
-        std::string vertSource = getSource("assets/shaders/vert.glsl");
-        std::string fragSource = getSource("assets/shaders/frag.glsl");
+        std::string vertSource = getSource(Engine::assets + "shaders/vert.glsl");
+        std::string fragSource = getSource(Engine::assets + "shaders/frag.glsl");
 
         const char *vertPtr = vertSource.c_str();
         const char *fragPtr = fragSource.c_str();
@@ -87,6 +87,7 @@ Child::Child(Child *parent) : parent(parent), engine(parent->engine) { }
 
 void Child::draw() { }
 void Child::update(float time) { }
+void Child::click(int button, int action) { }
 void Child::keyboard(int key, int action) { }
 
 void Child::engineDraw() {
@@ -101,20 +102,16 @@ void Child::engineUpdate(float time) {
     for (const auto &c : children) c->engineUpdate(time);
 }
 
+void Child::engineClick(int button, int action) {
+    click(button, action);
+
+    for (const auto &c : children) c->engineClick(button, action);
+}
+
 void Child::engineKeyboard(int key, int action) {
     keyboard(key, action);
 
     for (const auto &c : children) c->engineKeyboard(key, action);
-}
-
-void Engine::key(int key, int action) const {
-    app->engineKeyboard(key, action);
-}
-
-void Engine::scale(int width, int height) const {
-    constexpr float div = 80;
-
-    glUniform2f(scaleUniform, static_cast<float>(width) / div, static_cast<float>(height) / div);
 }
 
 Resource *Child::find(size_t hash) {
@@ -122,6 +119,20 @@ Resource *Child::find(size_t hash) {
 
     return x == resources.end() ? (parent ? parent->find(hash) : nullptr) : (x->second.get());
 }
+
+void Engine::key(int key, int action) const {
+    app->engineKeyboard(key, action);
+}
+
+void Engine::click(int button, int action) const {
+    app->engineClick(button, action);
+}
+
+void Engine::scale(int width, int height) const {
+    glUniform2f(scaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
+}
+
+std::string Engine::assets = "assets/";
 
 namespace {
     int64_t now() {
@@ -159,6 +170,10 @@ Engine::Engine(GLFWwindow *window) : window(window), world(b2Vec2(0.0f, -10.0f))
 
     glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window))->key(key, action);
+    });
+
+    glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods) {
+        reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window))->click(button, action);
     });
 
     glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int width, int height) {
