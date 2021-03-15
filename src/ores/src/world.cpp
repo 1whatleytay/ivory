@@ -8,6 +8,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <ctime>
+#include <algorithm>
+
 namespace blocks {
     float ridgeNoise(float x, float y, unsigned char seed) {
         float frequency = 1.0f;

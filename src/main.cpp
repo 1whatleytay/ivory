@@ -16,7 +16,7 @@ int main(int count, const char **args) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Pizza", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Game", nullptr, nullptr);
     if (!window)
         throw std::exception();
 
@@ -27,10 +27,19 @@ int main(int count, const char **args) {
     if (!gladLoadGL())
         throw std::exception();
 
+    auto clean = [](std::string input) {
+        int64_t x;
+        while ((x = input.find('\\')) != std::string::npos) {
+            input[x] = '/';
+        }
+
+        return input;
+    };
+
     if (count > 1) {
-        Engine::assets = args[1];
+        Engine::assets = clean(args[1]);
     } else if (count == 1) {
-        std::string path(args[0]);
+        std::string path = clean(args[0]);
 
         auto x = path.rfind('/');
         if (x != std::string::npos)
@@ -44,7 +53,7 @@ int main(int count, const char **args) {
     if (Engine::assets[Engine::assets.size() - 1] != '/')
         Engine::assets += '/';
 
-    Engine(window).run<Game>();
+    std::make_unique<Engine>(window)->run<Game>();
 
     glfwDestroyWindow(window);
     glfwTerminate();
