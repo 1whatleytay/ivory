@@ -110,7 +110,7 @@ namespace parts {
     }
 
     Texture::Texture(Child *component, size_t width, size_t height) : Resource(component),
-        width(height), height(height), taken(width * height),
+        width(width), height(height), taken(width * height),
         texture(glGenTextures, glDeleteTextures), sampler(glGenSamplers, glDeleteSamplers) {
 
         bind();
@@ -119,16 +119,16 @@ namespace parts {
         glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
-    void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture) {
+    void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture, float depth) {
         tex = &texture;
 
-        range.write(shapes::square(x, y, width, height, texture).data());
+        range.write(shapes::square(x, y, width, height, texture, depth).data());
     }
 
-    void BoxVisual::set(const BoxBody &body, const TextureRange &texture) {
+    void BoxVisual::set(const BoxBody &body, const TextureRange &texture, float depth) {
         auto pos = body.value->GetPosition();
 
-        set(pos.x, pos.y, body.width, body.height, texture);
+        set(pos.x, pos.y, body.width, body.height, texture, depth);
     }
 
     void BoxVisual::draw() {
@@ -194,7 +194,7 @@ namespace parts {
     void Box::update(float time) {
         // No need to bother redrawing to buffer if its static.
         if (alive)
-            visual->set(*body, texture);
+            visual->set(*body, texture, depth);
     }
 
     Box::Box(Child *parent, float x, float y, float width, float height, Color color, float weight)
@@ -218,11 +218,12 @@ namespace parts {
     }
 
     namespace shapes {
-        std::array<Vertex, 6> square(float x, float y, float width, float height, const TextureRange &texture) {
-            Position bottomLeftPos = { x - width / 2, y - height / 2 };
-            Position bottomRightPos = { x + width / 2, y - height / 2 };
-            Position topLeftPos = { x - width / 2, y + height / 2 };
-            Position topRightPos = { x + width / 2, y + height / 2 };
+        std::array<Vertex, 6> square(float x, float y, float width, float height,
+            const TextureRange &texture, float depth) {
+            Vec3 bottomLeftPos = { x - width / 2, y - height / 2, depth };
+            Vec3 bottomRightPos = { x + width / 2, y - height / 2, depth };
+            Vec3 topLeftPos = { x - width / 2, y + height / 2, depth };
+            Vec3 topRightPos = { x + width / 2, y + height / 2, depth };
 
             float tw = texture.get()->width;
             float th = texture.get()->height;
@@ -230,10 +231,10 @@ namespace parts {
             float shiftX = 1 / (tw * 100);
             float shiftY = 1 / (th * 100);
 
-            Position bottomLeftTex = { texture.x / tw + shiftX, (texture.y + texture.h) / th - shiftY };
-            Position bottomRightTex = { (texture.x + texture.w) / tw - shiftX, (texture.y + texture.h) / th - shiftY };
-            Position topLeftTex = { texture.x / tw + shiftX, texture.y / th + shiftY };
-            Position topRightTex = { (texture.x + texture.w) / tw - shiftX, texture.y / th + shiftY };
+            Vec2 bottomLeftTex = { texture.x / tw + shiftX, (texture.y + texture.h) / th - shiftY };
+            Vec2 bottomRightTex = { (texture.x + texture.w) / tw - shiftX, (texture.y + texture.h) / th - shiftY };
+            Vec2 topLeftTex = { texture.x / tw + shiftX, texture.y / th + shiftY };
+            Vec2 topRightTex = { (texture.x + texture.w) / tw - shiftX, texture.y / th + shiftY };
 
             Vertex bottomLeft = { bottomLeftPos, bottomLeftTex };
             Vertex bottomRight = { bottomRightPos, bottomRightTex };

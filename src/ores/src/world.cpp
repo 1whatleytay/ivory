@@ -1,83 +1,14 @@
 #include <ores/world.h>
 
-#include <engine/parts.h>
-
-#define STB_PERLIN_IMPLEMENTATION
-#include <stb_perlin.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <ores/assets.h>
 
 #include <ctime>
 #include <algorithm>
 
-namespace blocks {
-    float ridgeNoise(float x, float y, unsigned char seed) {
-        float frequency = 1.0f;
-        float prev = 1.0f;
-        float amplitude = 0.5f;
-        float sum = 0.0f;
-
-        for (int i = 0; i < 6; i++) {
-            float r = stb_perlin_noise3_internal(x*frequency,y*frequency, 0, 0, 0, 0, (unsigned char)i + seed);
-            r = 1.2 - (float) fabs(r);
-            r = r*r;
-            sum += r*amplitude*prev;
-            prev = r;
-            frequency *= 2.0;
-            amplitude *= 0.5;
-        }
-        return sum;
-    }
-
-    BlockType stone = { "Stone", "images/stone.png" };
-    BlockType grass = { "Grass", "images/grass.png" };
-    BlockType dirt = { "Dirt", "images/dirt.png" };
-    BlockType ore = { "Ore", "images/diamond_ore.png" };
-
-    constexpr float blockSize = 1.2;
-
-    std::vector<const BlockType *> generate(size_t width, size_t height) {
-        std::vector<const BlockType *> result(width * height);
-        std::fill(result.begin(), result.end(), &stone);
-
-        auto a = [width](size_t x, size_t y) { return x + y * width; };
-
-        unsigned char seed = time(nullptr);
-
-        for (size_t x = 0; x < width; x++) {
-            for (size_t y = 0; y < height; y++) {
-                if (result[a(x, y)] != &stone)
-                    continue;
-
-//                auto v = 1 - stb_perlin_ridge_noise3(x * 0.1, y * 0.1, 0, 2.0, 0.5, 1.2, 6.0);
-                auto v = 1 - ridgeNoise(x * 0.1, y * 0.1, seed);
-
-                if (v > 0.4f)
-                    result[a(x, y)] = &ore;
-                else if (v > 0.2f)
-                    result[a(x, y)] = &dirt;
-            }
-        }
-
-        for (size_t x = 0; x < width; x++) {
-            result[a(x, 0)] = &grass;
-
-            for (size_t y = 1; y < 5; y++)
-                result[a(x, y)] = &dirt;
-        }
-
-        return result;
-    }
-}
-
-BlockType::BlockType(std::string name, std::string path, bool solid)
-    : name(std::move(name)), path(std::move(path)), solid(solid) { }
-
 void Block::update(float time) {
     progress += time * 4;
 
-    if (progress > 10 && isBreaking) {
+    if (progress > 2 && isBreaking) {
         progress = 0;
         isBreaking = false;
         parent->as<World>().destroy.push_back(this);
@@ -85,7 +16,7 @@ void Block::update(float time) {
 
     float size = blocks::blockSize + isBreaking * std::sin(progress) * 0.2;
 
-    visual->set(x, y, size, size, texture);
+    visual->set(x, y, size, size, texture, isBreaking ? -0.1 : 0);
 }
 
 void Block::click(int button, int action) {
@@ -190,19 +121,6 @@ World::World(Child *parent, size_t width, size_t height) : Child(parent), width(
 
     auto tex = get<parts::Texture>(100, 100);
 
-    auto load = [&tex](const std::string &path) {
-        int w, h, c;
-
-        uint8_t *data = stbi_load(path.c_str(), &w, &h, &c, 4);
-
-        parts::TextureRange range = tex->grab(w, h);
-        range.write(data);
-
-        stbi_image_free(data);
-
-        return range;
-    };
-
     auto a = [width](size_t x, size_t y) { return x + y * width; };
 
     auto data = blocks::generate(width, height);
@@ -217,7 +135,7 @@ World::World(Child *parent, size_t width, size_t height) : Child(parent), width(
 
             auto iterator = textures.find(type);
             if (iterator == textures.end()) {
-                range = &textures.insert({ type, load(Engine::assets + type->path) }).first->second;
+                range = &textures.insert({ type, assets::load(*tex, type->path) }).first->second;
             } else {
                 range = &iterator->second;
             }

@@ -2,14 +2,7 @@
 
 #include <engine/parts.h>
 
-struct BlockType {
-    std::string name;
-    std::string path;
-
-    bool solid = true;
-
-    BlockType(std::string name, std::string path, bool solid = true);
-};
+#include <shared/blocks.h>
 
 struct Block : public Child {
     const BlockType &type;

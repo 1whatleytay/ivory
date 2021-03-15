@@ -120,6 +120,19 @@ Resource *Child::find(size_t hash) {
     return x == resources.end() ? (parent ? parent->find(hash) : nullptr) : (x->second.get());
 }
 
+Bounds Engine::bounds() {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    float screenWidth = static_cast<float>(width) / zoom;
+    float screenHeight = static_cast<float>(height) / zoom;
+
+    return Bounds {
+        -screenWidth / 2 - offsetX, screenHeight / 2 - offsetY,
+        screenWidth, screenHeight
+    };
+}
+
 void Engine::key(int key, int action) const {
     app->engineKeyboard(key, action);
 }
@@ -148,7 +161,7 @@ void Engine::execute() {
         glfwPollEvents();
 
         glClearColor(sky.red, sky.green, sky.blue, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto current = now();
 
@@ -179,6 +192,8 @@ Engine::Engine(GLFWwindow *window) : window(window), world(b2Vec2(0.0f, -10.0f))
     glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int width, int height) {
         reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window))->scale(width, height);
     });
+
+    glEnable(GL_DEPTH_TEST);
 
     program = loadShaderProgram();
     glUseProgram(program);

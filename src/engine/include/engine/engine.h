@@ -13,6 +13,13 @@
 
 struct Child;
 
+struct Bounds {
+    float x, y;
+    float width, height;
+
+    void transform(float x, float y, const Bounds &from);
+};
+
 struct Engine {
     static std::string assets;
 
@@ -24,13 +31,14 @@ struct Engine {
     GLint offsetUniform;
     GLint scaleUniform;
 
-    float offsetX = 0, offsetY = 0;
-
     Child *app = nullptr;
 
     Color sky;
 
     float zoom = 80;
+    float offsetX = 0, offsetY = 0;
+
+    Bounds bounds();
 
     void key(int key, int action) const;
     void scale(int width, int height) const;

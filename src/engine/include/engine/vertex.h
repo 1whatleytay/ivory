@@ -7,11 +7,18 @@
 #include <array>
 #include <cstdint>
 
-struct Position {
+struct Vec2 {
     float x = 0, y = 0;
 
-    Position() = default;
-    Position(float x, float y);
+    Vec2() = default;
+    Vec2(float x, float y);
+};
+
+struct Vec3 {
+    float x = 0, y = 0, depth = 0;
+
+    Vec3() = default;
+    Vec3(float x, float y, float depth);
 };
 
 struct Color {
@@ -24,8 +31,8 @@ struct Color {
 };
 
 struct Vertex {
-    Position position;
-    Position texCoord;
+    Vec3 position;
+    Vec2 texCoord;
 
     static void mark();
 };

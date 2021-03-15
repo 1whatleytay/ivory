@@ -1,6 +1,7 @@
 #include <engine/vertex.h>
 
-Position::Position(float x, float y) : x(x), y(y) { }
+Vec2::Vec2(float x, float y) : x(x), y(y) { }
+Vec3::Vec3(float x, float y, float depth) : x(x), y(y), depth(depth) { }
 
 std::array<uint8_t, 4> Color::data() const {
     return {
@@ -18,7 +19,7 @@ Color::Color(uint32_t color) {
 }
 
 void Vertex::mark() {
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(Vertex), (void *)offsetof(Vertex, position));
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), (void *)offsetof(Vertex, position));
     glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(Vertex), (void *)offsetof(Vertex, texCoord));
 
     glEnableVertexAttribArray(0);

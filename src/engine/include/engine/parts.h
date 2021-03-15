@@ -89,8 +89,8 @@ namespace parts {
         BufferRange range;
         const TextureRange *tex = nullptr;
 
-        void set(float x, float y, float width, float height, const TextureRange &texture);
-        void set(const BoxBody &body, const TextureRange &texture);
+        void set(float x, float y, float width, float height, const TextureRange &texture, float depth = 0);
+        void set(const BoxBody &body, const TextureRange &texture, float depth = 0);
 
         void draw() override;
 
@@ -102,6 +102,7 @@ namespace parts {
         BoxVisual *visual;
 
         TextureRange texture;
+        float depth = 0;
 
         bool alive = true;
 
@@ -112,6 +113,7 @@ namespace parts {
     };
 
     namespace shapes {
-        std::array<Vertex, 6> square(float x, float y, float width, float height, const TextureRange &texture);
+        std::array<Vertex, 6> square(float x, float y, float width, float height,
+            const TextureRange &texture, float depth = 0);
     }
 }
