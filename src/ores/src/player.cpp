@@ -1,5 +1,7 @@
 #include <ores/player.h>
 
+#include <ores/client.h>
+
 bool Player::isTouchingGround() const {
     b2ContactEdge *edge = box->body->value->GetContactList();
 
@@ -27,7 +29,10 @@ void Player::update(float time) {
 void Player::keyboard(int key, int action) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_R) {
-            box->body->value->SetTransform(b2Vec2(0, 0.5), 0);
+            float x = client ? client->hello.playerX : 0;
+            float y = client ? client->hello.playerY : 2;
+
+            box->body->value->SetTransform(b2Vec2(x, y), 0);
             box->body->value->SetAwake(true);
         }
 
@@ -36,6 +41,11 @@ void Player::keyboard(int key, int action) {
     }
 }
 
-Player::Player(Child *parent, float x, float y) : Child(parent) {
+Player::Player(Child *parent) : Child(parent) {
+    client = find<Client>();
+
+    float x = client ? client->hello.playerX : 0;
+    float y = client ? client->hello.playerY : 0.5;
+
     box = make<parts::Box>(x, y, 1, 1, Color(0xFF0000u), 1);
 }

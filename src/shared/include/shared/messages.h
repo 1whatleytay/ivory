@@ -9,6 +9,7 @@ enum class MessageType {
     Error,
     Hello,
     Move,
+    Replace,
 };
 
 struct Container {
@@ -24,35 +25,54 @@ struct Event {
     virtual ~Event() = default;
 };
 
-struct Hello : public Event {
-    size_t playerId;
-    float playerX, playerY;
+namespace messages {
+    struct Hello : public Event {
+        size_t playerId;
+        float playerX, playerY;
 
-    size_t worldWidth, worldHeight;
-    std::vector<int64_t> blocks;
+        size_t worldWidth, worldHeight;
+        std::vector<int64_t> blocks;
 
-    MessageType type() const override;
-    void read(Reader &reader) override;
-    void write(Writer &writer) const override;
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
 
-    Hello() = default;
-    Hello(size_t playerId, float playerX, float playerY,
-        size_t worldWidth, size_t worldHeight, std::vector<int64_t> blocks);
-};
+        Hello() = default;
+        Hello(size_t playerId, float playerX, float playerY,
+            size_t worldWidth, size_t worldHeight, std::vector<int64_t> blocks);
+    };
 
-struct Move : public Event {
-    size_t playerId;
+    struct Move : public Event {
+        size_t playerId;
 
-    float x, y;
+        float x, y;
 
-    MessageType type() const override;
-    void read(Reader &reader) override;
-    void write(Writer &writer) const override;
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
 
-    Move() = default;
-    Move(size_t playerId, float x, float y);
-};
+        Move() = default;
+        Move(size_t playerId, float x, float y);
+    };
 
-using Message = std::variant<Hello, Move>;
+    struct Replace : public Event {
+        size_t x, y;
+
+        int64_t block;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        Replace() = default;
+        Replace(size_t x, size_t y, int64_t block);
+    };
+}
+
+using Message = std::variant<
+    messages::Hello,
+    messages::Move,
+    messages::Replace
+>;
 
 Message parse(const Container &container, const uint8_t *data);

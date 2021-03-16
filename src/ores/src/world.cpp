@@ -1,6 +1,7 @@
 #include <ores/world.h>
 
 #include <ores/assets.h>
+#include <ores/client.h>
 
 #include <ctime>
 #include <algorithm>
@@ -40,8 +41,9 @@ void Block::click(int button, int action) {
     }
 }
 
-Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &texture, float x, float y)
-    : Child(parent), type(type), texture(texture), x(x), y(y) {
+Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &texture,
+    size_t posX, size_t posY, float x, float y)
+    : Child(parent), type(type), texture(texture), posX(posX), posY(posY), x(x), y(y) {
 
     visual = make<parts::BoxVisual>();
     visual->set(x, y, blocks::blockSize, blocks::blockSize, texture);
@@ -50,6 +52,12 @@ Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &te
 void World::update(float time) {
     if (!destroy.empty()) {
         for (const auto *d : destroy) {
+            if (client) {
+                client->write(messages::Replace {
+                    d->posX, d->posY, -1
+                });
+            }
+
             auto iterator = std::find(blocks.begin(), blocks.end(), d);
             assert(iterator != blocks.end());
 
@@ -116,20 +124,29 @@ void World::makeBodies() {
     }
 }
 
-World::World(Child *parent, size_t width, size_t height) : Child(parent), width(width), height(height) {
+World::World(Child *parent) : Child(parent), width(40), height(100) {
+    client = find<Client>();
+
+    if (client) {
+        width = client->hello.worldWidth;
+        height = client->hello.worldHeight;
+    }
+
     supply<parts::Buffer>(width * height * 6);
 
+    auto a = [this](size_t x, size_t y) { return x + y * width; };
+
+    auto data = client ? blocks::decode(client->hello.blocks, blocks::getBlocks()) : blocks::generate(width, height);
     auto tex = get<parts::Texture>(100, 100);
-
-    auto a = [width](size_t x, size_t y) { return x + y * width; };
-
-    auto data = blocks::generate(width, height);
 
     blocks.resize(width * height);
 
     for (int64_t x = 0; x < width; x++) {
         for (int64_t y = 0; y < height; y++) {
             const BlockType *type = data[a(x, y)];
+
+            if (!type)
+                continue;
 
             const parts::TextureRange *range;
 
@@ -142,7 +159,7 @@ World::World(Child *parent, size_t width, size_t height) : Child(parent), width(
 
             assert(range);
 
-            blocks[a(x, y)] = make<Block>(*type, *range, x * blocks::blockSize, -y * blocks::blockSize);
+            blocks[a(x, y)] = make<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
         }
     }
 

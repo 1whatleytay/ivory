@@ -4,11 +4,14 @@
 
 #include <shared/blocks.h>
 
+struct Client;
+
 struct Block : public Child {
     const BlockType &type;
     const parts::TextureRange &texture;
 
-    float x, y;
+    size_t posX = 0, posY = 0;
+    float x = 0, y = 0;
 
     parts::BoxVisual *visual;
 
@@ -18,11 +21,14 @@ struct Block : public Child {
     void update(float time) override;
     void click(int button, int action) override;
 
-    Block(Child *parent, const BlockType &type, const parts::TextureRange &texture, float x, float y);
+    Block(Child *parent, const BlockType &type, const parts::TextureRange &texture,
+        size_t posX, size_t posY, float x, float y);
 };
 
 struct World : public Child {
-    size_t width, height;
+    size_t width = 0, height = 0;
+
+    Client *client = nullptr;
 
     std::vector<Block *> blocks;
     std::vector<Holder<parts::BoxBody>> bodies;
@@ -35,5 +41,5 @@ struct World : public Child {
 
     void makeBodies();
 
-    explicit World(Child *parent, size_t width = 40, size_t height = 100);
+    explicit World(Child *parent);
 };

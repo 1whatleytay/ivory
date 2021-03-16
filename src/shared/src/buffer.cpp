@@ -1,5 +1,7 @@
 #include <shared/buffer.h>
 
+#include <cassert>
+
 size_t Reader::sizeLeft() const {
     return size - index;
 }

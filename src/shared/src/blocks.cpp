@@ -3,6 +3,8 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include <stb_perlin.h>
 
+#include <ctime>
+
 BlockType::BlockType(std::string name, std::string path, bool solid)
     : name(std::move(name)), path(std::move(path)), solid(solid) { }
 
@@ -50,7 +52,7 @@ namespace blocks {
         Blocks result(blocks.size());
 
         for (size_t a = 0; a < blocks.size(); a++)
-            result[a] = index[blocks[a]];
+            result[a] = a < 0 ? nullptr : index[blocks[a]];
 
         return result;
     }
@@ -59,7 +61,7 @@ namespace blocks {
         std::vector<int64_t> result(blocks.size());
 
         for (size_t a = 0; a < blocks.size(); a++)
-            result[a] = index.at(blocks[a]);
+            result[a] = blocks[a] ? index.at(blocks[a]) : -1;
 
         return result;
     }
