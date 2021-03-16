@@ -5,8 +5,9 @@
 Options::Options(int count, const char **args) {
     CLI::App app;
 
-    app.add_flag("-b,--breakable", blocksBreakable, "Set if blocks should be breakable");
+    app.add_flag("--no-break", noBreak, "Whether blocks should be breakable");
 
+    app.add_option("-p,--port", port, "Server hosting port");
     app.add_option("--width", worldWidth, "World generation width");
     app.add_option("--height", worldHeight, "World generation height");
 

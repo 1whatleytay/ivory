@@ -49,6 +49,31 @@ Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &te
     visual->set(x, y, blocks::blockSize, blocks::blockSize, texture);
 }
 
+void World::editBlock(size_t x, size_t y, int64_t id) {
+    assert(client);
+
+    if (id < 0) {
+        blocks[x + y * width].reset();
+    } else {
+        const BlockType *type = client->blockList[id];
+
+        const parts::TextureRange *range;
+
+        auto iterator = textures.find(type);
+        if (iterator == textures.end()) {
+            range = &textures.insert({ type, assets::load(*texture, type->path) }).first->second;
+        } else {
+            range = &iterator->second;
+        }
+
+        assert(range);
+
+        blocks[x + y * width] = hold<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
+    }
+
+    makeBodies();
+}
+
 void World::update(float time) {
     if (!destroy.empty()) {
         for (const auto *d : destroy) {
@@ -58,10 +83,12 @@ void World::update(float time) {
                 });
             }
 
-            auto iterator = std::find(blocks.begin(), blocks.end(), d);
+            auto iterator = std::find_if(blocks.begin(), blocks.end(), [d](const auto &e) {
+                return e.value == d;
+            });
             assert(iterator != blocks.end());
 
-            drop(*iterator);
+            iterator->reset();
         }
 
         destroy.clear();
@@ -76,7 +103,8 @@ void World::makeBodies() {
     auto a = [this](size_t x, size_t y) { return x + y * width; };
 
     std::vector<bool> taken(width * height);
-    std::transform(blocks.begin(), blocks.end(), taken.begin(), [](const auto &e) { return !e || !e->type.solid; });
+    std::transform(blocks.begin(), blocks.end(), taken.begin(),
+        [](const auto &e) { return !e.value || !e.value->type.solid; });
 
     for (int64_t y = 0; y < height; y++) {
         for (int64_t x = 0; x < width; x++) {
@@ -136,8 +164,8 @@ World::World(Child *parent) : Child(parent), width(40), height(100) {
 
     auto a = [this](size_t x, size_t y) { return x + y * width; };
 
-    auto data = client ? blocks::decode(client->hello.blocks, blocks::getBlocks()) : blocks::generate(width, height);
-    auto tex = get<parts::Texture>(100, 100);
+    auto data = client ? blocks::decode(client->hello.blocks, client->blockList) : blocks::generate(width, height);
+    texture = get<parts::Texture>(100, 100);
 
     blocks.resize(width * height);
 
@@ -152,14 +180,14 @@ World::World(Child *parent) : Child(parent), width(40), height(100) {
 
             auto iterator = textures.find(type);
             if (iterator == textures.end()) {
-                range = &textures.insert({ type, assets::load(*tex, type->path) }).first->second;
+                range = &textures.insert({ type, assets::load(*texture, type->path) }).first->second;
             } else {
                 range = &iterator->second;
             }
 
             assert(range);
 
-            blocks[a(x, y)] = make<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
+            blocks[a(x, y)] = hold<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
         }
     }
 

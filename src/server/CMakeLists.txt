@@ -7,4 +7,4 @@ add_executable(server
     src/options.cpp)
 
 target_include_directories(server PRIVATE include)
-target_link_libraries(server PUBLIC shared CLI11 asio)
+target_link_libraries(server PUBLIC shared CLI11 asio fmt)

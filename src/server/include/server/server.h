@@ -24,15 +24,17 @@ struct Connection {
 
     tcp::socket socket;
 
-    size_t bytes = 0;
-    std::vector<uint8_t> buffer;
+    float x = 0, y = 0;
+
+    bool disconnected = false;
 
     void write(const Event &event);
     void announce(const Event &event);
 
-    void check();
-    void listen();
     void handle(const Message &message);
+
+    void listenBody(const Container &container);
+    void listen();
 
     Connection(size_t playerId, tcp::socket socket, Server &server, messages::Hello hello);
 };

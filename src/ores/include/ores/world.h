@@ -30,12 +30,16 @@ struct World : public Child {
 
     Client *client = nullptr;
 
-    std::vector<Block *> blocks;
+    parts::Texture *texture = nullptr;
+
+    std::vector<Holder<Block>> blocks;
     std::vector<Holder<parts::BoxBody>> bodies;
 
     std::vector<Block *> destroy;
 
     std::unordered_map<const BlockType *, parts::TextureRange> textures;
+
+    void editBlock(size_t x, size_t y, int64_t id);
 
     void update(float time) override;
 

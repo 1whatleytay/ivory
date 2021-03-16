@@ -74,11 +74,17 @@ struct Holder {
 
     void reset(Child *parent, T *value);
 
+    void reset() {
+        reset(nullptr, nullptr);
+    }
+
     Holder<T> &operator =(Holder<T> &&o) noexcept {
         reset(o.parent, o.value);
 
         o.value = nullptr;
         o.parent = nullptr;
+
+        return *this;
     }
 
     Holder(Holder &&o) noexcept {
@@ -88,6 +94,7 @@ struct Holder {
         o.parent = nullptr;
     }
 
+    Holder() = default;
     Holder(const Holder &holder) = delete;
     Holder(Child *parent, T *value) : parent(parent), value(value) { }
     ~Holder() { reset(nullptr, nullptr); }

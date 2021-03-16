@@ -52,7 +52,7 @@ namespace blocks {
         Blocks result(blocks.size());
 
         for (size_t a = 0; a < blocks.size(); a++)
-            result[a] = a < 0 ? nullptr : index[blocks[a]];
+            result[a] = blocks[a] < 0 ? nullptr : index[blocks[a]];
 
         return result;
     }

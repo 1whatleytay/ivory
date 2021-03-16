@@ -10,6 +10,8 @@ enum class MessageType {
     Hello,
     Move,
     Replace,
+    Log,
+    Disconnect
 };
 
 struct Container {
@@ -67,12 +69,36 @@ namespace messages {
         Replace() = default;
         Replace(size_t x, size_t y, int64_t block);
     };
+
+    struct Log : public Event {
+        std::string message;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        Log() = default;
+        Log(std::string message);
+    };
+
+    struct Disconnect : public Event {
+        size_t playerId;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        Disconnect() = default;
+        Disconnect(size_t playerId);
+    };
 }
 
 using Message = std::variant<
     messages::Hello,
     messages::Move,
-    messages::Replace
+    messages::Replace,
+    messages::Log,
+    messages::Disconnect
 >;
 
 Message parse(const Container &container, const uint8_t *data);

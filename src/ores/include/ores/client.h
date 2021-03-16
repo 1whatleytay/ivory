@@ -7,18 +7,31 @@
 
 #include <asio.hpp>
 
+#include <condition_variable>
+
 using asio::ip::tcp;
 
 struct Client : public Resource {
+    std::mutex mutex;
+
     asio::io_context context;
     tcp::socket socket;
 
     messages::Hello hello;
+    bool hasHello = false;
 
-    bool kill = false;
+    blocks::Blocks blockList;
+    blocks::Indices blockIndices;
 
-    Message read();
+    std::mutex messagesMutex;
+    std::vector<Message> messages;
+
     void write(const Event &event);
+
+    void listen();
+    void listenBody(const Container &container);
+
+    void handle(const Message &message);
 
     void run();
 

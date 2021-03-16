@@ -24,6 +24,27 @@ void Player::update(float time) {
         box->body->setVelocity(+5, std::nullopt);
 
     box->body->capVelocity(5, std::nullopt);
+
+    if (client) {
+        float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
+
+        netUpdateTime += time;
+        if (netUpdateTime > timeToGo) {
+            if (timeToGo == 0) {
+                netUpdateTime = 0;
+            } else {
+                netUpdateTime = std::fmod(netUpdateTime, timeToGo);
+            }
+
+            auto pos = box->body->value->GetPosition();
+
+            client->write(messages::Move {
+                client->hello.playerId,
+
+                pos.x, pos.y
+            });
+        }
+    }
 }
 
 void Player::keyboard(int key, int action) {
@@ -38,6 +59,10 @@ void Player::keyboard(int key, int action) {
 
         if (key == GLFW_KEY_W && isTouchingGround())
             box->body->setVelocity(std::nullopt, 5);
+
+        if (key == GLFW_KEY_U) {
+            netUpdateIndex++;
+        }
     }
 }
 
