@@ -5,9 +5,11 @@
 #include <iostream>
 
 void Connection::markDisconnected() {
-    disconnected = true;
-    fmt::print("Connection [{:0>4}] disconnected.\n", playerId);
-    announce(messages::Disconnect{ playerId });
+    if (!disconnected) {
+        disconnected = true;
+        fmt::print("Connection [{:0>4}] disconnected.\n", playerId);
+        announce(messages::Disconnect{ playerId });
+    }
 }
 
 void Connection::write(const Event &event) {

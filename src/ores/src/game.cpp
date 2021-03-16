@@ -49,6 +49,8 @@ void Game::update(float time) {
 
         for (const Message& message : client->messages)
             std::visit(visitor, message);
+
+        client->messages.clear();
     }
 }
 
