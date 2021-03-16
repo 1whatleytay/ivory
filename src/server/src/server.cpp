@@ -2,6 +2,14 @@
 
 #include <fmt/printf.h>
 
+#include <iostream>
+
+void Connection::markDisconnected() {
+    disconnected = true;
+    fmt::print("Connection [{:0>4}] disconnected.\n", playerId);
+    announce(messages::Disconnect{ playerId });
+}
+
 void Connection::write(const Event &event) {
     Writer writer;
     event.write(writer);
@@ -10,12 +18,13 @@ void Connection::write(const Event &event) {
     auto data = std::make_unique<uint8_t[]>(fullSize);
     *reinterpret_cast<Container *>(data.get()) = { event.type(), writer.data.size() };
     std::memcpy(&data[sizeof(Container)], writer.data.data(), writer.data.size());
+    uint8_t* ptr = data.get();
 
-    asio::async_write(socket, asio::buffer(data.get(), fullSize), [fullSize, data { std::move(data) }](
+    asio::async_write(socket, asio::buffer(ptr, fullSize), [this, fullSize, data { std::move(data) }](
         asio::error_code ec, std::size_t n
     ) {
         if (ec == asio::error::eof || n != fullSize)
-            throw std::exception();
+            markDisconnected();
     });
 }
 
@@ -75,9 +84,7 @@ void Connection::listenBody(const Container &container) {
 
     auto respond = [this, container, body = std::move(body)](asio::error_code e, size_t n) {
         if (e == asio::error::eof || n != container.size) {
-            disconnected = true;
-            fmt::print("Connection [{:0>4}] disconnected.\n", playerId);
-            announce(messages::Disconnect { playerId });
+            markDisconnected();
             return;
         }
 
@@ -95,9 +102,7 @@ void Connection::listen() {
 
     auto respond = [this, container = std::move(container)](asio::error_code e, size_t n) {
         if (e == asio::error::eof || n != sizeof(Container)) {
-            disconnected = true;
-            fmt::print("Connection [{:0>4}] disconnected.\n", playerId);
-            announce(messages::Disconnect { playerId });
+            markDisconnected();
             return;
         }
 

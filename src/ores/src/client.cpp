@@ -14,8 +14,8 @@ void Client::write(const Event &event) {
     asio::async_write(socket, asio::buffer(data.get(), fullSize), [fullSize, data { std::move(data) }](
         asio::error_code ec, std::size_t n
     ) {
-        if (ec == asio::error::eof || n != fullSize)
-            throw std::exception();
+        //if (ec == asio::error::eof || n != fullSize)
+        //    throw std::exception();
     });
 }
 
@@ -63,9 +63,10 @@ void Client::listen() {
 
     auto respond = [this, container = std::move(container)](asio::error_code e, size_t n) {
         if (e == asio::error::eof || n != sizeof(Container))
-            throw std::exception();
-
-        listenBody(*container);
+            //throw std::exception();
+            listen();
+        else
+            listenBody(*container);
     };
 
     asio::async_read(socket, asio::buffer(ptr, sizeof(Container)), std::move(respond));

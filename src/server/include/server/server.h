@@ -27,6 +27,8 @@ struct Connection {
     float x = 0, y = 0;
 
     bool disconnected = false;
+    
+    void markDisconnected();
 
     void write(const Event &event);
     void announce(const Event &event);
