@@ -3,7 +3,7 @@
 #include <engine/parts.h>
 
 struct Background : public Child {
-    parts::TextureRange range;
+    parts::TextureRange *range;
 
     parts::BoxVisual *visual;
 

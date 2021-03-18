@@ -1,4 +1,5 @@
 #include <ores/game.h>
+#include <ores/options.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -7,6 +8,8 @@
 
 int main(int count, const char **args) {
     fmt::print("Starting.\n");
+
+    Options options(count, args);
 
     if (!glfwInit())
         throw std::exception();
@@ -36,9 +39,9 @@ int main(int count, const char **args) {
         return input;
     };
 
-    if (count > 1) {
-        Engine::assets = clean(args[1]);
-    } else if (count == 1) {
+    if (!options.assetsPath.empty()) {
+        Engine::assets = options.assetsPath;
+    } else if (count > 0) {
         std::string path = clean(args[0]);
 
         auto x = path.rfind('/');
@@ -53,7 +56,7 @@ int main(int count, const char **args) {
     if (Engine::assets[Engine::assets.size() - 1] != '/')
         Engine::assets += '/';
 
-    std::make_unique<Engine>(window)->run<Game>();
+    std::make_unique<Engine>(window)->run<Game>(options);
 
     glfwDestroyWindow(window);
     glfwTerminate();

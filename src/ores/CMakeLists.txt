@@ -7,6 +7,7 @@ add_library(ores STATIC
     include/ores/client.h
     include/ores/assets.h
     include/ores/net-player.h
+    include/ores/options.h
 
     src/game.cpp
     src/player.cpp
@@ -15,7 +16,8 @@ add_library(ores STATIC
     src/camera.cpp
     src/background.cpp
     src/assets.cpp
-    src/net-player.cpp)
+    src/net-player.cpp
+    src/options.cpp)
 
 target_include_directories(ores PUBLIC include)
-target_link_libraries(ores PUBLIC engine shared asio)
+target_link_libraries(ores PUBLIC engine shared asio CLI11)

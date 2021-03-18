@@ -11,8 +11,8 @@ void Background::update(float time) {
     auto bounds = engine.bounds();
 
     visual->set(
-        bounds.x + bounds.width / 2 + engine.offsetX / 10, bounds.y - bounds.height / 2 + engine.offsetY / 10,
-        bounds.width * 2, bounds.height * 2, range, 0.1);
+        bounds.x + bounds.width / 2 + engine.offsetX / 20, bounds.y - bounds.height / 2 + engine.offsetY / 20,
+        bounds.width * 1.6, bounds.height * 1.6, *range, 0.1);
 }
 
 Background::Background(Child *parent) : Child(parent),

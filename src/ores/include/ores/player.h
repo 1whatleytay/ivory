@@ -14,7 +14,7 @@ struct Player : public Child {
     float netUpdateTime = 0;
 
     size_t netUpdateIndex = 0;
-    static constexpr std::array netUpdates = { 2.0, 0.05, 0.1, 0.2, 1.0, 0.0, 0.016 };
+    static constexpr std::array netUpdates = { 0.05, 0.1, 0.2, 1.0, 0.0, 0.016 };
 
     void update(float time) override;
     void keyboard(int key, int action) override;

@@ -6,10 +6,12 @@ bool Player::isTouchingGround() const {
     b2ContactEdge *edge = box->body->value->GetContactList();
 
     while (edge) {
-        auto body = reinterpret_cast<parts::BoxBody *>(edge->other->GetUserData().pointer);
+        if (edge->contact->IsTouching()) {
+            auto body = reinterpret_cast<parts::BoxBody *>(edge->other->GetUserData().pointer);
 
-        if (body->isGround())
-            return true;
+            if (body->isGround())
+                return true;
+        }
 
         edge = edge->next;
     }
@@ -58,7 +60,7 @@ void Player::keyboard(int key, int action) {
         }
 
         if (key == GLFW_KEY_W && isTouchingGround())
-            box->body->setVelocity(std::nullopt, 5);
+            box->body->setVelocity(std::nullopt, 7.4);
 
         if (key == GLFW_KEY_U) {
             netUpdateIndex++;

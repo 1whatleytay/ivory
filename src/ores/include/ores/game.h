@@ -8,6 +8,7 @@
 
 struct World;
 struct Client;
+struct Options;
 
 struct Game : public Child {
     World *world = nullptr;
@@ -18,6 +19,6 @@ struct Game : public Child {
 
     void update(float time) override;
 
-    explicit Game(Engine &engine);
+    explicit Game(Engine &engine, const Options &options);
     ~Game();
 };

@@ -12,7 +12,7 @@ struct NetPlayer : public Child {
 
     size_t playerId = 0;
 
-    parts::TextureRange range;
+    parts::TextureRange *range;
 
     bool hide = false;
 

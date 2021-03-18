@@ -61,9 +61,9 @@ void World::editBlock(size_t x, size_t y, int64_t id) {
 
         auto iterator = textures.find(type);
         if (iterator == textures.end()) {
-            range = &textures.insert({ type, assets::load(*texture, type->path) }).first->second;
+            range = textures.insert({ type, assets::load(*texture, type->path) }).first->second;
         } else {
-            range = &iterator->second;
+            range = iterator->second;
         }
 
         assert(range);
@@ -180,9 +180,9 @@ World::World(Child *parent) : Child(parent), width(40), height(100) {
 
             auto iterator = textures.find(type);
             if (iterator == textures.end()) {
-                range = &textures.insert({ type, assets::load(*texture, type->path) }).first->second;
+                range = textures.insert({ type, assets::load(*texture, type->path) }).first->second;
             } else {
-                range = &iterator->second;
+                range = iterator->second;
             }
 
             assert(range);

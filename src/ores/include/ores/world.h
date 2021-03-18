@@ -37,7 +37,7 @@ struct World : public Child {
 
     std::vector<Block *> destroy;
 
-    std::unordered_map<const BlockType *, parts::TextureRange> textures;
+    std::unordered_map<const BlockType *, parts::TextureRange *> textures;
 
     void editBlock(size_t x, size_t y, int64_t id);
 

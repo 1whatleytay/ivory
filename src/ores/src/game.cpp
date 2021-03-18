@@ -4,6 +4,7 @@
 #include <ores/camera.h>
 #include <ores/player.h>
 #include <ores/client.h>
+#include <ores/options.h>
 
 void Game::update(float time) {
     if (client) {
@@ -54,17 +55,21 @@ void Game::update(float time) {
     }
 }
 
-Game::Game(Engine &engine) : Child(engine) {
+Game::Game(Engine &engine, const Options &options) : Child(engine) {
+    supply<OptionsResource>(options);
+
     supply<parts::Buffer>(600);
     supply<parts::Texture>(200, 200);
 
-    try {
-        client = supply<Client>("127.0.0.1");
-        clientThread = std::make_unique<std::thread>([this]() { client->run(); });
+    if (options.multiplayer) {
+        try {
+            client = supply<Client>(options.address, std::to_string(options.port));
+            clientThread = std::make_unique<std::thread>([this]() { client->run(); });
 
-        while (!client->hasHello);
-    } catch (const std::exception &e) {
-
+            while (!client->hasHello);
+        } catch (const std::exception &e) {
+            throw;
+        }
     }
 
     make<Camera>()->player = make<Player>();

@@ -10,9 +10,6 @@ namespace parts {
 
     struct BufferRange {
         Buffer *parent = nullptr;
-        std::shared_ptr<Buffer> owned;
-
-        [[nodiscard]] Buffer *get() const;
 
         size_t begin = 0, size = 0;
 
@@ -20,7 +17,6 @@ namespace parts {
         BufferRange &write(void *data);
 
         BufferRange(Buffer *parent, size_t begin, size_t size);
-        BufferRange(std::unique_ptr<Buffer> owned, size_t begin, size_t size);
     };
 
     struct Buffer : public Resource {
@@ -31,9 +27,11 @@ namespace parts {
         Handle buffer;
         Handle vao;
 
+        std::vector<std::pair<std::unique_ptr<Buffer>, std::unique_ptr<BufferRange>>> children;
+
         void bind() const;
 
-        BufferRange grab(size_t count);
+        BufferRange *grab(size_t count, void *data = nullptr);
 
         Buffer(Child *component, size_t vertices);
     };
@@ -42,9 +40,6 @@ namespace parts {
 
     struct TextureRange {
         Texture *parent;
-        std::shared_ptr<Texture> owned;
-
-        [[nodiscard]] Texture *get() const;
 
         size_t x, y;
         size_t w, h;
@@ -52,7 +47,6 @@ namespace parts {
         TextureRange &write(void *data);
 
         TextureRange(Texture *parent, size_t x, size_t y, size_t w, size_t h);
-        TextureRange(std::unique_ptr<Texture> owned, size_t x, size_t y, size_t w, size_t h);
     };
 
     struct Texture : public Resource {
@@ -60,13 +54,16 @@ namespace parts {
 
         std::vector<bool> taken;
 
+        std::vector<std::pair<std::unique_ptr<Texture>, std::unique_ptr<TextureRange>>> children;
+
         Handle texture;
         Handle sampler;
 
         void bind() const;
 
-        TextureRange grab(size_t w, size_t h);
+        TextureRange *grab(size_t w, size_t h, void *data = nullptr);
 
+        Texture(Child *component);
         Texture(Child *component, size_t width, size_t height);
     };
 
@@ -86,7 +83,7 @@ namespace parts {
     };
 
     struct BoxVisual : public Child {
-        BufferRange range;
+        BufferRange *range = nullptr;
         const TextureRange *tex = nullptr;
 
         void set(float x, float y, float width, float height, const TextureRange &texture, float depth = 0);
@@ -101,15 +98,15 @@ namespace parts {
         BoxBody *body;
         BoxVisual *visual;
 
-        TextureRange texture;
+        TextureRange *texture;
         float depth = 0;
 
         bool alive = true;
 
         void update(float time) override;
 
-        explicit Box(Child *parent, float x, float y, float width, float height, Color color, float weight = 0);
-        explicit Box(Child *parent, float x, float y, float width, float height, TextureRange texture, float weight = 0);
+        Box(Child *parent, float x, float y, float width, float height, Color color, float weight = 0);
+        Box(Child *parent, float x, float y, float width, float height, TextureRange *texture, float weight = 0);
     };
 
     namespace shapes {
