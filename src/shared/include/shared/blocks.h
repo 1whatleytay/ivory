@@ -14,16 +14,20 @@ struct BlockType {
 };
 
 namespace blocks {
+    extern BlockType wood;
+
+    using BlockIndex = int32_t;
+
     using Blocks = std::vector<const BlockType *>;
-    using Indices = std::unordered_map<const BlockType *, int64_t>;
+    using Indices = std::unordered_map<const BlockType *, BlockIndex>;
 
     constexpr float blockSize = 1.2;
 
     Blocks getBlocks();
     Indices getIndices(const Blocks &blocks = getBlocks());
 
-    Blocks decode(const std::vector<int64_t> &blocks, const Blocks &index);
-    std::vector<int64_t> encode(const Blocks &blocks, const Indices &index);
+    Blocks decode(const std::vector<BlockIndex> &blocks, const Blocks &index);
+    std::vector<BlockIndex> encode(const Blocks &blocks, const Indices &index);
 
     Blocks generate(size_t width, size_t height);
 }

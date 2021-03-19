@@ -3,6 +3,8 @@
 #include <ores/assets.h>
 #include <ores/client.h>
 
+#include <fmt/printf.h>
+
 #include <ctime>
 #include <algorithm>
 
@@ -20,27 +22,6 @@ void Block::update(float time) {
     visual->set(x, y, size, size, texture, isBreaking ? -0.1 : 0);
 }
 
-void Block::click(int button, int action) {
-    if (action == GLFW_PRESS) {
-        if (button == GLFW_MOUSE_BUTTON_1) {
-            double kX = 0, kY = 0;
-            glfwGetCursorPos(engine.window, &kX, &kY);
-
-            int wW = 0, wH = 0;
-            glfwGetWindowSize(engine.window, &wW, &wH);
-
-            double cX = (2 * (kX / wW) - 1) * ((wW / engine.zoom) / 2) - engine.offsetX;
-            double cY = -(2 * (kY / wH) - 1) * ((wH / engine.zoom) / 2) - engine.offsetY;
-
-            if (cX > (x - blocks::blockSize / 2) && cX < (x + blocks::blockSize / 2)
-                && cY > (y - blocks::blockSize / 2) && cY < (y + blocks::blockSize / 2)) {
-                progress = 0;
-                isBreaking = true;
-            }
-        }
-    }
-}
-
 Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &texture,
     size_t posX, size_t posY, float x, float y)
     : Child(parent), type(type), texture(texture), posX(posX), posY(posY), x(x), y(y) {
@@ -49,14 +30,10 @@ Block::Block(Child *parent, const BlockType &type, const parts::TextureRange &te
     visual->set(x, y, blocks::blockSize, blocks::blockSize, texture);
 }
 
-void World::editBlock(size_t x, size_t y, int64_t id) {
-    assert(client);
-
-    if (id < 0) {
+void World::editBlock(size_t x, size_t y, const BlockType *type) {
+    if (!type) {
         blocks[x + y * width].reset();
     } else {
-        const BlockType *type = client->blockList[id];
-
         const parts::TextureRange *range;
 
         auto iterator = textures.find(type);
@@ -68,7 +45,8 @@ void World::editBlock(size_t x, size_t y, int64_t id) {
 
         assert(range);
 
-        blocks[x + y * width] = hold<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
+        blocks[x + y * width] = hold<Block>(*type, *range, x, y,
+            x * blocks::blockSize, -static_cast<float>(y) * blocks::blockSize);
     }
 
     makeBodies();
@@ -94,6 +72,42 @@ void World::update(float time) {
         destroy.clear();
 
         makeBodies();
+    }
+}
+
+void World::click(int button, int action) {
+    if (action == GLFW_PRESS) {
+        double kX = 0, kY = 0;
+        glfwGetCursorPos(engine.window, &kX, &kY);
+
+        int wW = 0, wH = 0;
+        glfwGetWindowSize(engine.window, &wW, &wH);
+
+        double cX = (2 * (kX / wW) - 1) * ((wW / engine.zoom) / 2) - engine.offsetX;
+        double cY = -(2 * (kY / wH) - 1) * ((wH / engine.zoom) / 2) - engine.offsetY;
+
+        int64_t x = (cX + blocks::blockSize / 2) / blocks::blockSize;
+        int64_t y = -(cY - blocks::blockSize / 2) / blocks::blockSize;
+
+        if (x >= 0 && y >= 0 && x < width && y < height) {
+            Block *b = blocks[x + y * width].value;
+
+            if (button == GLFW_MOUSE_BUTTON_LEFT && b) {
+                b->progress = 0;
+                b->isBreaking = true;
+            }
+
+            if (button == GLFW_MOUSE_BUTTON_RIGHT && !b) {
+                editBlock(x, y, &blocks::wood);
+
+                if (client) {
+                    client->write(messages::Replace {
+                        static_cast<size_t>(x), static_cast<size_t>(y),
+                        client->blockIndices[&blocks::wood]
+                    });
+                }
+            }
+        }
     }
 }
 
@@ -187,7 +201,8 @@ World::World(Child *parent) : Child(parent), width(40), height(100) {
 
             assert(range);
 
-            blocks[a(x, y)] = hold<Block>(*type, *range, x, y, x * blocks::blockSize, -y * blocks::blockSize);
+            blocks[a(x, y)] = hold<Block>(*type, *range, x, y,
+                x * blocks::blockSize, -static_cast<float>(y) * blocks::blockSize);
         }
     }
 

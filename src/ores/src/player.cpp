@@ -2,14 +2,33 @@
 
 #include <ores/client.h>
 
+#include <fmt/printf.h>
+
 bool Player::isTouchingGround() const {
     b2ContactEdge *edge = box->body->value->GetContactList();
 
-    while (edge) {
-        if (edge->contact->IsTouching()) {
-            auto body = reinterpret_cast<parts::BoxBody *>(edge->other->GetUserData().pointer);
+    auto isGround = [](uintptr_t a) { return reinterpret_cast<parts::BoxBody *>(a)->isGround(); };
 
-            if (body->isGround())
+    while (edge) {
+        if (edge->contact->IsTouching() && isGround(edge->other->GetUserData().pointer)) {
+            b2WorldManifold manifold;
+            edge->contact->GetWorldManifold(&manifold);
+
+            bool all = true;
+
+            if (edge->contact->GetManifold()->pointCount < 2)
+                continue;
+
+            for (size_t a = 0; a < 2; a++) {
+                auto point = manifold.points[a] - box->body->value->GetPosition();
+
+                if (point.y >= 0) {
+                    all = false;
+                    break;
+                }
+            }
+
+            if (all)
                 return true;
         }
 

@@ -11,7 +11,7 @@ namespace messages {
     }
 
     Hello::Hello(size_t playerId, float playerX, float playerY,
-        size_t worldWidth, size_t worldHeight, std::vector<int64_t> blocks)
+        size_t worldWidth, size_t worldHeight, std::vector<blocks::BlockIndex> blocks)
         : playerId(playerId), playerX(playerX), playerY(playerY),
         worldWidth(worldWidth), worldHeight(worldHeight), blocks(std::move(blocks)) { }
 

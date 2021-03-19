@@ -19,7 +19,6 @@ struct Block : public Child {
     bool isBreaking = false;
 
     void update(float time) override;
-    void click(int button, int action) override;
 
     Block(Child *parent, const BlockType &type, const parts::TextureRange &texture,
         size_t posX, size_t posY, float x, float y);
@@ -39,9 +38,10 @@ struct World : public Child {
 
     std::unordered_map<const BlockType *, parts::TextureRange *> textures;
 
-    void editBlock(size_t x, size_t y, int64_t id);
+    void editBlock(size_t x, size_t y, const BlockType *type);
 
     void update(float time) override;
+    void click(int button, int action) override;
 
     void makeBodies();
 

@@ -44,7 +44,7 @@ void Game::update(float time) {
             }
 
             void operator()(const messages::Replace& r) {
-                game.world->editBlock(r.x, r.y, r.block);
+                game.world->editBlock(r.x, r.y, r.block < 0 ? nullptr : game.client->blockList[r.block]);
             }
         } visitor { *this };
 

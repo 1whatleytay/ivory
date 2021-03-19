@@ -33,7 +33,7 @@ namespace messages {
         float playerX, playerY;
 
         size_t worldWidth, worldHeight;
-        std::vector<int64_t> blocks;
+        std::vector<blocks::BlockIndex> blocks;
 
         MessageType type() const override;
         void read(Reader &reader) override;
@@ -41,7 +41,7 @@ namespace messages {
 
         Hello() = default;
         Hello(size_t playerId, float playerX, float playerY,
-            size_t worldWidth, size_t worldHeight, std::vector<int64_t> blocks);
+            size_t worldWidth, size_t worldHeight, std::vector<blocks::BlockIndex> blocks);
     };
 
     struct Move : public Event {

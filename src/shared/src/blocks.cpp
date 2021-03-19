@@ -32,15 +32,16 @@ namespace blocks {
     BlockType dirt = { "Dirt", "images/blocks/dirt.png" };
     BlockType goldOre = { "Gold Ore", "images/blocks/gold_ore.png" };
     BlockType diamondOre = { "Diamond Ore", "images/blocks/diamond_ore.png" };
+    BlockType wood = { "Wood", "images/blocks/wood.png" };
 
     std::vector<const BlockType *> getBlocks() {
         return {
-            &stone, &grass, &dirt, &goldOre, &diamondOre
+            &stone, &grass, &dirt, &goldOre, &diamondOre, &wood
         };
     };
 
-    std::unordered_map<const BlockType *, int64_t> getIndices(const std::vector<const BlockType *> &blocks) {
-        std::unordered_map<const BlockType *, int64_t> result;
+    std::unordered_map<const BlockType *, BlockIndex> getIndices(const std::vector<const BlockType *> &blocks) {
+        std::unordered_map<const BlockType *, BlockIndex> result;
 
         for (size_t a = 0; a < blocks.size(); a++)
             result[blocks[a]] = a;
@@ -48,7 +49,7 @@ namespace blocks {
         return result;
     }
 
-    Blocks decode(const std::vector<int64_t> &blocks, const Blocks &index) {
+    Blocks decode(const std::vector<BlockIndex> &blocks, const Blocks &index) {
         Blocks result(blocks.size());
 
         for (size_t a = 0; a < blocks.size(); a++)
@@ -57,14 +58,20 @@ namespace blocks {
         return result;
     }
 
-    std::vector<int64_t> encode(const Blocks &blocks, const Indices &index) {
-        std::vector<int64_t> result(blocks.size());
+    std::vector<BlockIndex> encode(const Blocks &blocks, const Indices &index) {
+        std::vector<BlockIndex> result(blocks.size());
 
         for (size_t a = 0; a < blocks.size(); a++)
             result[a] = blocks[a] ? index.at(blocks[a]) : -1;
 
         return result;
     }
+
+    // Generation Constants
+    constexpr size_t skyDepth = 20;
+    constexpr size_t diamondDepth = 50;
+
+    constexpr float surfaceCrazinessFactor = 7.0f;
 
     std::vector<const BlockType *> generate(size_t width, size_t height) {
         std::vector<const BlockType *> result(width * height);
@@ -76,23 +83,35 @@ namespace blocks {
 
         for (size_t x = 0; x < width; x++) {
             for (size_t y = 0; y < height; y++) {
+                auto v = 1 - ridgeNoise(x * 0.1, y * 0.1, seed);
+
+                if (y < skyDepth && v + static_cast<float>(skyDepth - y) / surfaceCrazinessFactor > 1)
+                    result[a(x, y)] = nullptr;
+
                 if (result[a(x, y)] != &stone)
                     continue;
 
-                auto v = 1 - ridgeNoise(x * 0.1, y * 0.1, seed);
-
                 if (v > 0.4f)
                     result[a(x, y)] = &goldOre;
-                else if (v > 0.35f&& y > 30)
+                else if (v > 0.35f && y > diamondDepth)
                     result[a(x, y)] = &diamondOre;
             }
         }
 
         for (size_t x = 0; x < width; x++) {
-            result[a(x, 0)] = &grass;
+            size_t y;
+            for (y = 0; y < height; y++) {
+                if (result[a(x, y)])
+                    break;
+            }
 
-            for (size_t y = 1; y < 5; y++)
-                result[a(x, y)] = &dirt;
+            if (y + 5 >= height)
+                continue;
+
+            result[a(x, y)] = &grass;
+
+            for (size_t oy = 1; oy < 5; oy++)
+                result[a(x, y + oy)] = &dirt;
         }
 
         return result;
