@@ -35,7 +35,7 @@ namespace messages {
         writer.write(x, y, block);
     }
 
-    Replace::Replace(size_t x, size_t y, int64_t block) : x(x), y(y), block(block) { }
+    Replace::Replace(size_t x, size_t y, blocks::BlockIndex block) : x(x), y(y), block(block) { }
 
     // messages::Log
     MessageType Log::type() const { return MessageType::Log; }

@@ -21,7 +21,7 @@ struct Bounds {
 };
 
 struct Engine {
-    static std::string assets;
+    std::string assets;
 
     GLFWwindow *window = nullptr;
     b2World world;
@@ -55,7 +55,7 @@ struct Engine {
         app = nullptr;
     }
 
-    explicit Engine(GLFWwindow *window);
+    explicit Engine(GLFWwindow *window, std::string assets = "assets");
 };
 
 struct Resource {
