@@ -39,8 +39,10 @@ int main(int count, const char **args) {
         return input;
     };
 
+    std::string assets;
+
     if (!options.assetsPath.empty()) {
-        Engine::assets = options.assetsPath;
+        assets = options.assetsPath;
     } else if (count > 0) {
         std::string path = clean(args[0]);
 
@@ -48,15 +50,15 @@ int main(int count, const char **args) {
         if (x != std::string::npos)
             path = path.substr(0, x);
 
-        Engine::assets = path + "/assets";
+        assets = path + "/assets";
     } else {
-        Engine::assets = "assets";
+        assets = "assets";
     }
 
-    if (Engine::assets[Engine::assets.size() - 1] != '/')
-        Engine::assets += '/';
+    if (assets[assets.size() - 1] != '/')
+        assets += '/';
 
-    std::make_unique<Engine>(window)->run<Game>(options);
+    std::make_unique<Engine>(window, assets)->run<Game>(options);
 
     glfwDestroyWindow(window);
     glfwTerminate();

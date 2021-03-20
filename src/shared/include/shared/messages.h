@@ -60,14 +60,14 @@ namespace messages {
     struct Replace : public Event {
         size_t x, y;
 
-        int64_t block;
+        blocks::BlockIndex block;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Replace() = default;
-        Replace(size_t x, size_t y, int64_t block);
+        Replace(size_t x, size_t y, blocks::BlockIndex block);
     };
 
     struct Log : public Event {

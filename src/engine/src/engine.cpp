@@ -11,7 +11,7 @@
 #include <sstream>
 
 namespace {
-    Handle loadShaderProgram() {
+    Handle loadShaderProgram(const std::string &assets) {
         auto getSource = [](const std::string &path) -> std::string {
             std::ifstream stream(path);
             if (!stream.is_open())
@@ -23,8 +23,8 @@ namespace {
             return buffer.str();
         };
 
-        std::string vertSource = getSource(Engine::assets + "shaders/vert.glsl");
-        std::string fragSource = getSource(Engine::assets + "shaders/frag.glsl");
+        std::string vertSource = getSource(assets + "shaders/vert.glsl");
+        std::string fragSource = getSource(assets + "shaders/frag.glsl");
 
         const char *vertPtr = vertSource.c_str();
         const char *fragPtr = fragSource.c_str();
@@ -145,8 +145,6 @@ void Engine::scale(int width, int height) const {
     glUniform2f(scaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
 }
 
-std::string Engine::assets = "assets/";
-
 namespace {
     int64_t now() {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -178,7 +176,9 @@ void Engine::execute() {
     }
 }
 
-Engine::Engine(GLFWwindow *window) : window(window), world(b2Vec2(0.0f, -10.0f)), sky(0xCCFCF8) {
+Engine::Engine(GLFWwindow *window, std::string assets)
+    : assets(std::move(assets)), window(window), world(b2Vec2(0.0f, -10.0f)), sky(0xCCFCF8) {
+
     glfwSetWindowUserPointer(window, this);
 
     glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -195,7 +195,7 @@ Engine::Engine(GLFWwindow *window) : window(window), world(b2Vec2(0.0f, -10.0f))
 
     glEnable(GL_DEPTH_TEST);
 
-    program = loadShaderProgram();
+    program = loadShaderProgram(this->assets);
     glUseProgram(program);
 
     offsetUniform = glGetUniformLocation(program, "offset");

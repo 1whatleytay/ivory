@@ -5,7 +5,7 @@
 
 namespace assets {
     parts::TextureRange *load(parts::Texture &texture, const std::string &path) {
-        return loadAbsolute(texture, Engine::assets + path);
+        return loadAbsolute(texture, texture.component->engine.assets + path);
     }
 
     parts::TextureRange *loadAbsolute(parts::Texture &texture, const std::string &path) {
