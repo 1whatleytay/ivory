@@ -19,7 +19,7 @@ int main(int count, const char **args) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Game", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Avastus", nullptr, nullptr);
     if (!window)
         throw std::exception();
 
@@ -30,33 +30,15 @@ int main(int count, const char **args) {
     if (!gladLoadGL())
         throw std::exception();
 
-    auto clean = [](std::string input) {
-        int64_t x;
-        while ((x = input.find('\\')) != std::string::npos) {
-            input[x] = '/';
-        }
-
-        return input;
-    };
-
-    std::string assets;
+    fs::path assets;
 
     if (!options.assetsPath.empty()) {
         assets = options.assetsPath;
     } else if (count > 0) {
-        std::string path = clean(args[0]);
-
-        auto x = path.rfind('/');
-        if (x != std::string::npos)
-            path = path.substr(0, x);
-
-        assets = path + "/assets";
+        assets = fs::path(args[0]).parent_path() / "assets";
     } else {
         assets = "assets";
     }
-
-    if (assets[assets.size() - 1] != '/')
-        assets += '/';
 
     std::make_unique<Engine>(window, assets)->run<Game>(options);
 

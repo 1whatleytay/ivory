@@ -4,16 +4,14 @@ namespace messages {
     // messages::Hello
     MessageType Hello::type() const { return MessageType::Hello; }
     void Hello::write(Writer &writer) const {
-        writer.write(playerId, playerX, playerY, worldWidth, worldHeight, blocks);
+        writer.write(playerId, playerX, playerY, map);
     }
     void Hello::read(Reader &reader) {
-        reader.read(playerId, playerX, playerY, worldWidth, worldHeight, blocks);
+        reader.read(playerId, playerX, playerY, map);
     }
 
-    Hello::Hello(size_t playerId, float playerX, float playerY,
-        size_t worldWidth, size_t worldHeight, std::vector<blocks::BlockIndex> blocks)
-        : playerId(playerId), playerX(playerX), playerY(playerY),
-        worldWidth(worldWidth), worldHeight(worldHeight), blocks(std::move(blocks)) { }
+    Hello::Hello(size_t playerId, float playerX, float playerY, std::string map)
+        : playerId(playerId), playerX(playerX), playerY(playerY), map(std::move(map)) { }
 
     // messages::Move
     MessageType Move::type() const { return MessageType::Move; }
@@ -25,17 +23,6 @@ namespace messages {
     }
 
     Move::Move(size_t playerId, float x, float y) : playerId(playerId), x(x), y(y) { }
-
-    // messages::Replace
-    MessageType Replace::type() const { return MessageType::Replace; }
-    void Replace::read(Reader &reader) {
-        reader.read(x, y, block);
-    }
-    void Replace::write(Writer &writer) const {
-        writer.write(x, y, block);
-    }
-
-    Replace::Replace(size_t x, size_t y, blocks::BlockIndex block) : x(x), y(y), block(block) { }
 
     // messages::Log
     MessageType Log::type() const { return MessageType::Log; }
@@ -74,8 +61,6 @@ Message parse(const Container &container, const uint8_t *data) {
             return get<messages::Hello>(reader);
         case MessageType::Move:
             return get<messages::Move>(reader);
-        case MessageType::Replace:
-            return get<messages::Replace>(reader);
         case MessageType::Log:
             return get<messages::Log>(reader);
         case MessageType::Disconnect:

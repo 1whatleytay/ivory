@@ -22,22 +22,10 @@ void Client::write(const Event &event) {
 }
 
 void Client::handle(const Message &message) {
-    struct {
-        Client &client;
-
-        void operator()(const messages::Log &l) { throw std::exception(); }
-
-        void operator()(const messages::Hello &h) {
-            client.hello = h;
-            client.hasHello = true;
-        }
-
-        void operator()(const messages::Disconnect &d) { }
-        void operator()(const messages::Move &m) { }
-        void operator()(const messages::Replace &r) { }
-    } visitor { *this };
-
-    std::visit(visitor, message);
+    if (auto *h = std::get_if<messages::Hello>(&message)) {
+        hello = *h;
+        hasHello = true;
+    }
 
     std::lock_guard guard(messagesMutex);
     messages.push_back(message);
@@ -82,8 +70,7 @@ void Client::run() {
 }
 
 Client::Client(Child *component, const std::string &url, const std::string &port)
-    : Resource(component), context(), socket(context),
-    blockList(blocks::getBlocks()), blockIndices(blocks::getIndices(blockList)) {
+    : Resource(component), context(), socket(context) {
 
     tcp::resolver resolver(context);
     auto endpoints = resolver.resolve(url, port);

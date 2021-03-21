@@ -16,6 +16,7 @@ add_subdirectory(glad)
 add_subdirectory(glfw)
 add_subdirectory(box2d)
 add_subdirectory(CLI11)
+add_subdirectory(pugixml)
 
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE stb)

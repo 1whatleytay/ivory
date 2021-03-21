@@ -1,7 +1,6 @@
 #pragma once
 
 #include <shared/buffer.h>
-#include <shared/blocks.h>
 
 #include <variant>
 
@@ -9,7 +8,6 @@ enum class MessageType {
     Error,
     Hello,
     Move,
-    Replace,
     Log,
     Disconnect
 };
@@ -32,16 +30,14 @@ namespace messages {
         size_t playerId;
         float playerX, playerY;
 
-        size_t worldWidth, worldHeight;
-        std::vector<blocks::BlockIndex> blocks;
+        std::string map;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Hello() = default;
-        Hello(size_t playerId, float playerX, float playerY,
-            size_t worldWidth, size_t worldHeight, std::vector<blocks::BlockIndex> blocks);
+        Hello(size_t playerId, float playerX, float playerY, std::string map);
     };
 
     struct Move : public Event {
@@ -55,19 +51,6 @@ namespace messages {
 
         Move() = default;
         Move(size_t playerId, float x, float y);
-    };
-
-    struct Replace : public Event {
-        size_t x, y;
-
-        blocks::BlockIndex block;
-
-        MessageType type() const override;
-        void read(Reader &reader) override;
-        void write(Writer &writer) const override;
-
-        Replace() = default;
-        Replace(size_t x, size_t y, blocks::BlockIndex block);
     };
 
     struct Log : public Event {
@@ -96,7 +79,6 @@ namespace messages {
 using Message = std::variant<
     messages::Hello,
     messages::Move,
-    messages::Replace,
     messages::Log,
     messages::Disconnect
 >;

@@ -9,19 +9,20 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <filesystem> // so nice...
 #include <unordered_map>
+
+namespace fs = std::filesystem;
 
 struct Child;
 
 struct Bounds {
     float x, y;
     float width, height;
-
-    void transform(float x, float y, const Bounds &from);
 };
 
 struct Engine {
-    std::string assets;
+    fs::path assets;
 
     GLFWwindow *window = nullptr;
     b2World world;
@@ -55,7 +56,7 @@ struct Engine {
         app = nullptr;
     }
 
-    explicit Engine(GLFWwindow *window, std::string assets = "assets");
+    explicit Engine(GLFWwindow *window, fs::path assets = "assets");
 };
 
 struct Resource {

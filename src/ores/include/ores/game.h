@@ -6,12 +6,10 @@
 
 #include <thread>
 
-struct World;
 struct Client;
 struct Options;
 
 struct Game : public Child {
-    World *world = nullptr;
     Client *client = nullptr;
     std::unique_ptr<std::thread> clientThread;
 

@@ -1,6 +1,6 @@
 #include <ores/game.h>
 
-#include <ores/world.h>
+#include <ores/map.h>
 #include <ores/camera.h>
 #include <ores/player.h>
 #include <ores/client.h>
@@ -42,10 +42,6 @@ void Game::update(float time) {
 
                 iterator->second->drop(iterator->second->visual);
             }
-
-            void operator()(const messages::Replace& r) {
-                game.world->editBlock(r.x, r.y, r.block < 0 ? nullptr : game.client->blockList[r.block]);
-            }
         } visitor { *this };
 
         for (const Message& message : client->messages)
@@ -74,7 +70,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
 
     make<Camera>()->player = make<Player>();
 
-    world = make<World>();
+    make<Map>(engine.assets / "maps/map.xml");
 }
 
 Game::~Game() {

@@ -2,7 +2,6 @@
 
 #include <engine/engine.h>
 
-#include <shared/blocks.h>
 #include <shared/messages.h>
 
 #include <asio.hpp>
@@ -19,9 +18,6 @@ struct Client : public Resource {
 
     messages::Hello hello;
     bool hasHello = false;
-
-    blocks::Blocks blockList;
-    blocks::Indices blockIndices;
 
     std::mutex messagesMutex;
     std::vector<Message> messages;

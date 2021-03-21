@@ -11,7 +11,7 @@
 #include <sstream>
 
 namespace {
-    Handle loadShaderProgram(const std::string &assets) {
+    Handle loadShaderProgram(const fs::path &assets) {
         auto getSource = [](const std::string &path) -> std::string {
             std::ifstream stream(path);
             if (!stream.is_open())
@@ -23,8 +23,8 @@ namespace {
             return buffer.str();
         };
 
-        std::string vertSource = getSource(assets + "shaders/vert.glsl");
-        std::string fragSource = getSource(assets + "shaders/frag.glsl");
+        std::string vertSource = getSource(assets / "shaders/vert.glsl");
+        std::string fragSource = getSource(assets / "shaders/frag.glsl");
 
         const char *vertPtr = vertSource.c_str();
         const char *fragPtr = fragSource.c_str();
@@ -176,7 +176,7 @@ void Engine::execute() {
     }
 }
 
-Engine::Engine(GLFWwindow *window, std::string assets)
+Engine::Engine(GLFWwindow *window, fs::path assets)
     : assets(std::move(assets)), window(window), world(b2Vec2(0.0f, -10.0f)), sky(0xCCFCF8) {
 
     glfwSetWindowUserPointer(window, this);
@@ -195,7 +195,7 @@ Engine::Engine(GLFWwindow *window, std::string assets)
 
     glEnable(GL_DEPTH_TEST);
 
-    program = loadShaderProgram(assets);
+    program = loadShaderProgram(this->assets);
     glUseProgram(program);
 
     offsetUniform = glGetUniformLocation(program, "offset");
