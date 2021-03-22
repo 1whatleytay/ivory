@@ -1,8 +1,14 @@
 #include <ores/player.h>
 
 #include <ores/client.h>
+#include <ores/asset-loader.h>
 
 #include <fmt/printf.h>
+
+void Player::setAnimation(const TagInfo &animation) {
+    currentAnimation = &animation;
+    currentFrame = 0;
+}
 
 void Player::update(float time) {
     if (glfwGetKey(engine.window, GLFW_KEY_A) == GLFW_PRESS)
@@ -13,6 +19,19 @@ void Player::update(float time) {
         box->body->setVelocity(std::nullopt, +5);
     if (glfwGetKey(engine.window, GLFW_KEY_S) == GLFW_PRESS)
         box->body->setVelocity(std::nullopt, -5);
+
+
+    constexpr float frameDuration = 0.1;
+    frameUpdateTime += time;
+
+    while (frameUpdateTime > frameDuration) {
+        currentFrame++;
+        frameUpdateTime -= frameDuration;
+    }
+
+    size_t i = currentFrame % (currentAnimation->end - currentAnimation->start + 1) + currentAnimation->start;
+
+    box->texture = frames[i];
 
     if (client) {
         float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
@@ -73,5 +92,17 @@ Player::Player(Child *parent) : Child(parent) {
     float x = client ? client->hello.playerX : 0;
     float y = client ? client->hello.playerY : 0.5;
 
-    box = make<parts::Box>(x, y, 0.6, 0.6, Color(0xFF0000u), 1);
+    AssetLoader loader(engine.assets / "images/players/nate.json", engine.assets);
+
+    auto size = loader.size();
+
+    auto tex = assemble<parts::Texture>(loader.image.width, loader.image.height, loader.image.data.get());
+    frames = tex->grabTileset(size.first, size.second);
+
+    idle = loader.tags["walk right"];
+
+    setAnimation(idle);
+
+    box = make<parts::Box>(x, y, 0.39, 0.75, Color(0xFF0000u), 1);
+    box->depth = -0.07;
 }

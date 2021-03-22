@@ -36,7 +36,7 @@ struct Engine {
 
     Color sky;
 
-    float zoom = 60;
+    float zoom = 80;
     float offsetX = 0, offsetY = 0;
 
     Bounds bounds();

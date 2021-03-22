@@ -15,8 +15,8 @@ MapJoint::MapJoint(b2World &w) : MapPtr<b2Joint>(nullptr, [this](b2Joint *j) {
 void Map::draw() {
     textures.front()->bind();
 
-    for (auto b = layers.rbegin(); b != layers.rend(); b++)
-        (*b)->draw();
+    for (const auto &l : layers)
+        l->draw();
 }
 
 void Map::makeBodies(const MapLoader &m) {
@@ -40,7 +40,7 @@ void Map::makeBodies(const MapLoader &m) {
         }
     }
 
-    auto r = assemble<parts::Texture>()->grab(1, 1, Color(0x0000FF).data().data());
+//    auto r = assemble<parts::Texture>()->grab(1, 1, Color(0x0000FF).data().data());
 
     for (int64_t y = 0; y < m.height; y++) {
         for (int64_t x = 0; x < m.width; x++) {
@@ -83,10 +83,9 @@ void Map::makeBodies(const MapLoader &m) {
                 x * tileWidth + (w - 1) * tileWidth / 2 , -y * tileWidth - h * tileWidth / 2 + tileWidth / 2,
                 tileWidth * w, tileWidth * h));
 
-
-            auto visual = make<parts::BoxVisual>();
-            visual->set(x * tileWidth + (w - 1) * tileWidth / 2 , -y * tileWidth - h * tileWidth / 2 + tileWidth / 2,
-                tileWidth * w, tileWidth * h, *r, -0.1);
+//            auto visual = make<parts::BoxVisual>();
+//            visual->set(x * tileWidth + (w - 1) * tileWidth / 2 , -y * tileWidth - h * tileWidth / 2 + tileWidth / 2,
+//                tileWidth * w, tileWidth * h, *r, -0.1);
         }
     }
 }
@@ -106,7 +105,11 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
             tiles[t.first + a] = tileset[a];
     }
 
+    float depth = 0;
+
     for (const auto &l : loader.layers) {
+        depth -= 0.02;
+
         std::vector<Vertex> vertices(l.width * l.height * 6);
 
         for (int64_t x = 0; x < l.width; x++) {
@@ -119,7 +122,7 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
                 float size = exists ? tileWidth : 0;
 
                 auto v = parts::shapes::square(x * tileWidth, -y * tileWidth,
-                    size, size, exists ? j->second : nullptr);
+                    size, size, exists ? j->second : nullptr, depth);
 
                 std::copy(v.begin(), v.end(), vertices.begin() + ((x + y * l.width) * 6));
             }

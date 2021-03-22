@@ -3,6 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <fstream>
+#include <sstream>
+
 namespace assets {
     ImageData::ImageData() : data(nullptr, stbi_image_free) { }
 
@@ -27,5 +30,42 @@ namespace assets {
         range->write(data.data.get());
 
         return range;
+    }
+
+    std::string resolve(const Paths &paths) {
+        auto test = std::get<0>(paths);
+
+        if (fs::exists(test))
+            return test;
+
+        fs::path filename = fs::path(test).filename();
+
+        auto relative = std::get<1>(paths);
+        if (!relative.empty()) {
+            test = relative / filename;
+
+            if (fs::exists(test))
+                return test;
+        }
+
+        auto normal = std::get<2>(paths);
+        if (!normal.empty()) {
+            test = normal / filename;
+
+            if (fs::exists(test))
+                return test;
+        }
+
+        throw std::exception();
+    }
+
+    std::pair<std::string, std::string> loadResolved(const Paths &paths) {
+        std::string p = resolve(paths);
+
+        std::ifstream stream(p);
+        std::stringstream buffer;
+        buffer << stream.rdbuf();
+
+        return { buffer.str(), p };
     }
 }

@@ -6,61 +6,15 @@
 
 #include <fmt/printf.h>
 
-#include <fstream>
 #include <sstream>
 #include <filesystem>
-#include <iostream>
 
 namespace fs = std::filesystem;
 
-namespace {
-    std::string load(const std::string &path) {
-        std::ifstream stream(path);
-        std::stringstream buffer;
-        buffer << stream.rdbuf();
-
-        return buffer.str();
-    }
-
-    using Paths = const std::tuple<std::string, std::string, std::string>;
-
-    // First -> raw path, second -> relative path, third -> normal path
-    std::string resolve(const Paths &paths) {
-        auto test = std::get<0>(paths);
-
-        if (fs::exists(test))
-            return test;
-
-        fs::path filename = fs::path(test).filename();
-
-        auto relative = std::get<1>(paths);
-        if (!relative.empty()) {
-            test = relative / filename;
-
-            if (fs::exists(test))
-                return test;
-        }
-
-        auto normal = std::get<2>(paths);
-        if (!normal.empty()) {
-            test = normal / filename;
-
-            if (fs::exists(test))
-                return test;
-        }
-
-        throw std::exception();
-    }
-
-    std::pair<std::string, std::string> loadResolved(const Paths &paths) {
-        std::string p = resolve(paths);
-
-        return { load(p), p };
-    }
-}
-
 TilesetLoader::TilesetLoader(const std::string &path, const std::string &parent, const std::string &assets)
-    : TilesetLoader(loadResolved({ path, fs::path(parent).parent_path(), assets / fs::path("tilesets") }), assets) { }
+    : TilesetLoader(assets::loadResolved({
+        path, fs::path(parent).parent_path(), assets / fs::path("tilesets")
+    }), assets) { }
 
 TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     pugi::xml_document doc;
@@ -76,7 +30,7 @@ TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, co
 //    size_t tileCount = tileset.attribute("tilecount").as_ullong();
 
     auto image = tileset.child("image");
-    imageData = assets::loadImage(resolve({
+    imageData = assets::loadImage(assets::resolve({
         image.attribute("source").as_string(),
         fs::path(std::get<1>(data)).parent_path(),
         assets / fs::path("tilesets")
@@ -107,7 +61,9 @@ TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, co
 }
 
 MapLoader::MapLoader(const std::string &name, const std::string &assets)
-    : MapLoader(loadResolved({ name, "", assets / fs::path("maps") }), assets) { }
+    : MapLoader(assets::loadResolved({
+        name, fs::path(name).parent_path(), assets / fs::path("maps")
+    }), assets) { }
 
 MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     pugi::xml_document doc;

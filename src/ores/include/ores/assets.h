@@ -17,4 +17,10 @@ namespace assets {
 
     parts::TextureRange *load(parts::Texture &texture, const std::string &path);
     parts::TextureRange *loadAbsolute(parts::Texture &texture, const std::string &path);
+
+    using Paths = const std::tuple<std::string, std::string, std::string>;
+
+    // First -> raw path, second -> relative path, third -> normal path
+    std::string resolve(const Paths &paths);
+    std::pair<std::string, std::string> loadResolved(const Paths &paths);
 }
