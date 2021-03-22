@@ -49,5 +49,5 @@ void Camera::keyboard(int key, int action) {
 }
 
 Camera::Camera(Child *parent) : Child(parent) {
-    make<Background>();
+//    make<Background>();
 }

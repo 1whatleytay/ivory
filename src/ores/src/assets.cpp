@@ -4,20 +4,27 @@
 #include <stb_image.h>
 
 namespace assets {
+    ImageData::ImageData() : data(nullptr, stbi_image_free) { }
+
+    ImageData loadImage(const std::string &path) {
+        ImageData data;
+        data.data.reset(stbi_load(path.c_str(), &data.width, &data.height, nullptr, 4));
+
+        if (!data.data)
+            throw std::exception();
+
+        return data;
+    }
+
     parts::TextureRange *load(parts::Texture &texture, const std::string &path) {
         return loadAbsolute(texture, texture.component->engine.assets / path);
     }
 
     parts::TextureRange *loadAbsolute(parts::Texture &texture, const std::string &path) {
-        int w, h, c;
+        ImageData data = loadImage(path);
 
-        uint8_t *data = stbi_load(path.c_str(), &w, &h, &c, 4);
-        assert(data);
-
-        parts::TextureRange *range = texture.grab(w, h);
-        range->write(data);
-
-        stbi_image_free(data);
+        parts::TextureRange *range = texture.grab(data.width, data.height);
+        range->write(data.data.get());
 
         return range;
     }

@@ -62,9 +62,10 @@ namespace parts {
         void bind() const;
 
         TextureRange *grab(size_t w, size_t h, void *data = nullptr);
+        std::vector<TextureRange *> grabTileset(size_t w, size_t h);
 
         Texture(Child *component);
-        Texture(Child *component, size_t width, size_t height);
+        Texture(Child *component, size_t width, size_t height, void *data = nullptr);
     };
 
     struct BoxBody : public Child {
@@ -111,6 +112,6 @@ namespace parts {
 
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange &texture, float depth = 0);
+            const TextureRange *texture, float depth = 0);
     }
 }

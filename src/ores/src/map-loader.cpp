@@ -1,5 +1,7 @@
 #include <ores/map-loader.h>
 
+#include <ores/assets.h>
+
 #include <pugixml.hpp>
 
 #include <fmt/printf.h>
@@ -20,31 +22,96 @@ namespace {
         return buffer.str();
     }
 
-    std::string resolve(const std::string &path, const std::string &normalPath) {
-        if (fs::exists(path))
-            return path;
+    using Paths = const std::tuple<std::string, std::string, std::string>;
 
-        std::string test = normalPath / fs::path(path).filename();
+    // First -> raw path, second -> relative path, third -> normal path
+    std::string resolve(const Paths &paths) {
+        auto test = std::get<0>(paths);
 
-        return fs::exists(test) ? test : throw std::exception();
+        if (fs::exists(test))
+            return test;
+
+        fs::path filename = fs::path(test).filename();
+
+        auto relative = std::get<1>(paths);
+        if (!relative.empty()) {
+            test = relative / filename;
+
+            if (fs::exists(test))
+                return test;
+        }
+
+        auto normal = std::get<2>(paths);
+        if (!normal.empty()) {
+            test = normal / filename;
+
+            if (fs::exists(test))
+                return test;
+        }
+
+        throw std::exception();
+    }
+
+    std::pair<std::string, std::string> loadResolved(const Paths &paths) {
+        std::string p = resolve(paths);
+
+        return { load(p), p };
     }
 }
 
-TilesetLoader::TilesetLoader(size_t firstId, const std::string &path, const std::string &assets)
-    : TilesetLoader(firstId, load(path), path, assets) { }
+TilesetLoader::TilesetLoader(const std::string &path, const std::string &parent, const std::string &assets)
+    : TilesetLoader(loadResolved({ path, fs::path(parent).parent_path(), assets / fs::path("tilesets") }), assets) { }
 
-TilesetLoader::TilesetLoader(
-    size_t firstId, const std::string &data, const std::string &path, const std::string &assets) : firstId(firstId) {
+TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
+    pugi::xml_document doc;
+    if (!doc.load_string(std::get<0>(data).c_str()))
+        throw std::exception();
 
+    auto tileset = doc.child("tileset");
 
+    tileWidth = tileset.attribute("tilewidth").as_ullong();
+    tileHeight = tileset.attribute("tileheight").as_ullong();
+
+//    size_t columns = tileset.attribute("columns").as_ullong();
+//    size_t tileCount = tileset.attribute("tilecount").as_ullong();
+
+    auto image = tileset.child("image");
+    imageData = assets::loadImage(resolve({
+        image.attribute("source").as_string(),
+        fs::path(std::get<1>(data)).parent_path(),
+        assets / fs::path("tilesets")
+    }));
+
+    assert(imageData.width == image.attribute("width").as_ullong()
+        && imageData.height == image.attribute("height").as_ullong());
+
+    for (const auto &t : tileset.children("tile")) {
+        TileProperties &props = properties[t.attribute("id").as_ullong()];
+
+        for (const auto &e : t.child("properties").children("property")) {
+            std::string propName = e.attribute("name").as_string(), propType = e.attribute("type").as_string();
+
+            if (propName == "solid") {
+                assert(propType == "bool");
+
+                props.solid = e.attribute("value").as_bool();
+            } else if (propName == "sneak") {
+                assert(propType == "bool");
+
+                props.sneak = e.attribute("value").as_bool();
+            } else {
+                throw std::exception();
+            }
+        }
+    }
 }
 
-MapLoader::MapLoader(const std::string &path, const std::string &assets)
-    : MapLoader(load(path), path, assets) { }
+MapLoader::MapLoader(const std::string &name, const std::string &assets)
+    : MapLoader(loadResolved({ name, "", assets / fs::path("maps") }), assets) { }
 
-MapLoader::MapLoader(const std::string &data, const std::string &path, const std::string &assets) {
+MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     pugi::xml_document doc;
-    if (!doc.load_string(data.c_str()))
+    if (!doc.load_string(std::get<0>(data).c_str()))
         throw std::exception();
 
     auto map = doc.child("map");
@@ -62,7 +129,10 @@ MapLoader::MapLoader(const std::string &data, const std::string &path, const std
     assert(std::strcmp(map.attribute("renderorder").as_string(), "right-down") == 0);
 
     for (const auto &t : map.children("tileset")) {
-        tilesets.emplace_back(t.attribute("firstgid").as_ullong(), t.attribute("source").as_string(), assets);
+        tilesets.push_back({
+            t.attribute("firstgid").as_ullong(),
+            TilesetLoader(t.attribute("source").as_string(), std::get<1>(data), assets)
+        });
     }
 
     for (const auto &l : map.children("layer")) {
@@ -91,8 +161,14 @@ MapLoader::MapLoader(const std::string &data, const std::string &path, const std
         size_t w = l.attribute("width").as_ullong();
         size_t h = l.attribute("height").as_ullong();
 
-        assert(w * h == result.size());
+        assert(w * h == result.size() && width == w && height == h);
 
         layers.push_back({ l.attribute("name").as_string(), w, h, std::move(result) });
+    }
+
+    for (const auto &t : tilesets) {
+        for (const auto &p : t.second.properties) {
+            properties[t.first + p.first] = p.second;
+        }
     }
 }

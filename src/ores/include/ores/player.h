@@ -9,8 +9,6 @@ struct Player : public Child {
 
     Client *client = nullptr;
 
-    [[nodiscard]] bool isTouchingGround() const;
-
     float netUpdateTime = 0;
 
     size_t netUpdateIndex = 0;
@@ -18,6 +16,7 @@ struct Player : public Child {
 
     void update(float time) override;
     void keyboard(int key, int action) override;
+    void click(int button, int action) override;
 
     explicit Player(Child *parent);
 };

@@ -31,6 +31,9 @@ namespace parts {
             auto range = std::make_unique<BufferRange>(owned.get(), 0, count);
             auto *ptr = range.get();
 
+            if (data)
+                range->write(data);
+
             children.push_back(std::make_pair(std::move(owned), std::move(range)));
 
             return ptr;
@@ -41,6 +44,9 @@ namespace parts {
 
         auto range = std::make_unique<BufferRange>(this, start, count);
         auto *ptr = range.get();
+
+        if (data)
+            range->write(data);
 
         children.push_back(std::make_pair(nullptr, std::move(range)));
 
@@ -96,7 +102,7 @@ namespace parts {
                         range->write(data);
 
                     auto *ptr = range.get();
-                    children.push_back(std::make_pair(nullptr, std::move(range)));
+                    children.push_back({ nullptr, std::move(range) });
 
                     return ptr;
                 }
@@ -111,9 +117,32 @@ namespace parts {
             range->write(data);
 
         auto *ptr = range.get();
-        children.push_back(std::make_pair(std::move(owned), std::move(range)));
+        children.push_back({ std::move(owned), std::move(range) });
 
         return ptr;
+    }
+
+    std::vector<TextureRange *> Texture::grabTileset(size_t w, size_t h) {
+        if (std::any_of(taken.begin(), taken.end(), [](bool a) { return a; }))
+            throw std::exception();
+
+        if (width % w != 0 || height % h != 0)
+            throw std::exception();
+
+        std::vector<TextureRange *> result;
+
+        for (size_t y = 0; y < height; y += h) {
+            for (size_t x = 0; x < width; x += w) {
+                auto range = std::make_unique<TextureRange>(this, x, y, w, h);
+                result.push_back(range.get());
+
+                children.push_back({ nullptr, std::move(range) });
+            }
+        }
+
+        std::fill(taken.begin(), taken.end(), true);
+
+        return result;
     }
 
     void Texture::bind() const {
@@ -124,12 +153,12 @@ namespace parts {
 
     Texture::Texture(Child *component) : Texture(component, 0, 0) { }
 
-    Texture::Texture(Child *component, size_t width, size_t height) : Resource(component),
+    Texture::Texture(Child *component, size_t width, size_t height, void *data) : Resource(component),
         width(width), height(height), taken(width * height),
         texture(glGenTextures, glDeleteTextures), sampler(glGenSamplers, glDeleteSamplers) {
 
         bind();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
@@ -137,7 +166,7 @@ namespace parts {
     void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture, float depth) {
         tex = &texture;
 
-        range->write(shapes::square(x, y, width, height, texture, depth).data());
+        range->write(shapes::square(x, y, width, height, &texture, depth).data());
     }
 
     void BoxVisual::set(const BoxBody &body, const TextureRange &texture, float depth) {
@@ -197,7 +226,7 @@ namespace parts {
         b2FixtureDef fDef;
         fDef.shape = &fShape;
         fDef.density = weight;
-        fDef.friction = 0.9;
+        fDef.friction = isGround() ? 0 : 0.9;
 
         value->CreateFixture(&fDef);
     }
@@ -234,22 +263,25 @@ namespace parts {
 
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange &texture, float depth) {
+            const TextureRange *texture, float depth) {
             Vec3 bottomLeftPos = { x - width / 2, y - height / 2, depth };
             Vec3 bottomRightPos = { x + width / 2, y - height / 2, depth };
             Vec3 topLeftPos = { x - width / 2, y + height / 2, depth };
             Vec3 topRightPos = { x + width / 2, y + height / 2, depth };
 
-            float tw = texture.parent->width;
-            float th = texture.parent->height;
+            float tW = texture ? texture->parent->width : 1;
+            float tH = texture ? texture->parent->height : 1;
 
-            float shiftX = 1 / (tw * 100);
-            float shiftY = 1 / (th * 100);
+            float shiftX = 1 / (tW * 100);
+            float shiftY = 1 / (tH * 100);
 
-            Vec2 bottomLeftTex = { texture.x / tw + shiftX, (texture.y + texture.h) / th - shiftY };
-            Vec2 bottomRightTex = { (texture.x + texture.w) / tw - shiftX, (texture.y + texture.h) / th - shiftY };
-            Vec2 topLeftTex = { texture.x / tw + shiftX, texture.y / th + shiftY };
-            Vec2 topRightTex = { (texture.x + texture.w) / tw - shiftX, texture.y / th + shiftY };
+            float sX = texture ? texture->x : 0, sY = texture ? texture->y : 0;
+            float sW = texture ? texture->w : 0, sH = texture ? texture->h : 0;
+
+            Vec2 bottomLeftTex = { sX / tW + shiftX, (sY + sH) / tH - shiftY };
+            Vec2 bottomRightTex = { (sX + sW) / tW - shiftX, (sY + sH) / tH - shiftY };
+            Vec2 topLeftTex = { sX / tW + shiftX, sY / tH + shiftY };
+            Vec2 topRightTex = { (sX + sW) / tW - shiftX, sY / tH + shiftY };
 
             Vertex bottomLeft = { bottomLeftPos, bottomLeftTex };
             Vertex bottomRight = { bottomRightPos, bottomRightTex };

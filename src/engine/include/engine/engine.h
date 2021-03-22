@@ -112,7 +112,8 @@ struct Child {
     E &root() { return dynamic_cast<E &>(*engine.app); }
 
     std::vector<std::unique_ptr<Child>> children;
-    std::unordered_map<size_t, std::unique_ptr<Resource>> resources;
+    std::vector<std::unique_ptr<Resource>> resources;
+    std::unordered_map<size_t, std::unique_ptr<Resource>> supplies;
 
     virtual void draw();
     virtual void update(float time);
@@ -123,6 +124,11 @@ struct Child {
     void engineUpdate(float time);
     void engineClick(int button, int action);
     void engineKeyboard(int key, int action);
+
+    template <typename T, typename ...Args>
+    std::unique_ptr<T> create(const Args &... args) {
+        return std::make_unique<T>(this, args...);
+    }
 
     template <typename T, typename ...Args>
     T *make(const Args &... args) {
@@ -157,20 +163,25 @@ struct Child {
 
     Resource *find(size_t hash);
 
+    template <typename T, typename ...Args>
+    T *assemble(const Args &... args) {
+        auto c = create<T>(args...);
+
+        T *x = c.get();
+        resources.push_back(std::move(c));
+
+        return x;
+    }
+
     template <typename T>
     T *find() { return dynamic_cast<T *>(find(typeid(T).hash_code())); }
 
     template <typename T, typename ...Args>
-    std::unique_ptr<T> create(const Args &... args) {
-        return std::make_unique<T>(this, args...);
-    }
-
-    template <typename T, typename ...Args>
     T *supply(const Args &... args) {
-        auto c = std::make_unique<T>(this, args...);
+        auto c = create<T>(args...);
 
         T *x = c.get();
-        resources[typeid(T).hash_code()] = std::move(c);
+        supplies[typeid(T).hash_code()] = std::move(c);
 
         return x;
     }
@@ -185,13 +196,13 @@ struct Child {
     template <typename T>
     std::unique_ptr<T> destroy(T * &ptr) {
         auto match = [ptr](const auto &p) { return p.second.get() == ptr; };
-        auto i = std::find_if(resources.begin(), resources.end(), match);
+        auto i = std::find_if(supplies.begin(), supplies.end(), match);
 
-        if (i == resources.end())
+        if (i == supplies.end())
             return nullptr;
 
         Resource *temp = i->second.release();
-        resources.erase(i);
+        supplies.erase(i);
 
         ptr = nullptr;
 

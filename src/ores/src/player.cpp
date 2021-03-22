@@ -4,47 +4,15 @@
 
 #include <fmt/printf.h>
 
-bool Player::isTouchingGround() const {
-    b2ContactEdge *edge = box->body->value->GetContactList();
-
-    auto isGround = [](uintptr_t a) { return reinterpret_cast<parts::BoxBody *>(a)->isGround(); };
-
-    while (edge) {
-        if (edge->contact->IsTouching() && isGround(edge->other->GetUserData().pointer)) {
-            b2WorldManifold manifold;
-            edge->contact->GetWorldManifold(&manifold);
-
-            bool all = true;
-
-            if (edge->contact->GetManifold()->pointCount < 2)
-                continue;
-
-            for (size_t a = 0; a < 2; a++) {
-                auto point = manifold.points[a] - box->body->value->GetPosition();
-
-                if (point.y >= 0) {
-                    all = false;
-                    break;
-                }
-            }
-
-            if (all)
-                return true;
-        }
-
-        edge = edge->next;
-    }
-
-    return false;
-}
-
 void Player::update(float time) {
     if (glfwGetKey(engine.window, GLFW_KEY_A) == GLFW_PRESS)
         box->body->setVelocity(-5, std::nullopt);
-    else if (glfwGetKey(engine.window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(engine.window, GLFW_KEY_D) == GLFW_PRESS)
         box->body->setVelocity(+5, std::nullopt);
-
-    box->body->capVelocity(5, std::nullopt);
+    if (glfwGetKey(engine.window, GLFW_KEY_W) == GLFW_PRESS)
+        box->body->setVelocity(std::nullopt, +5);
+    if (glfwGetKey(engine.window, GLFW_KEY_S) == GLFW_PRESS)
+        box->body->setVelocity(std::nullopt, -5);
 
     if (client) {
         float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
@@ -78,12 +46,24 @@ void Player::keyboard(int key, int action) {
             box->body->value->SetAwake(true);
         }
 
-        if (key == GLFW_KEY_W && isTouchingGround())
-            box->body->setVelocity(std::nullopt, 7.4);
-
         if (key == GLFW_KEY_U) {
             netUpdateIndex++;
         }
+    }
+}
+
+void Player::click(int button, int action) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        double kX = 0, kY = 0;
+        glfwGetCursorPos(engine.window, &kX, &kY);
+
+        int wW = 0, wH = 0;
+        glfwGetWindowSize(engine.window, &wW, &wH);
+
+        double cX = (2 * (kX / wW) - 1) * ((wW / engine.zoom) / 2) - engine.offsetX;
+        double cY = -(2 * (kY / wH) - 1) * ((wH / engine.zoom) / 2) - engine.offsetY;
+
+        box->body->value->SetTransform(b2Vec2(cX, cY), 0);
     }
 }
 
@@ -93,5 +73,5 @@ Player::Player(Child *parent) : Child(parent) {
     float x = client ? client->hello.playerX : 0;
     float y = client ? client->hello.playerY : 0.5;
 
-    box = make<parts::Box>(x, y, 1, 1, Color(0xFF0000u), 1);
+    box = make<parts::Box>(x, y, 0.6, 0.6, Color(0xFF0000u), 1);
 }

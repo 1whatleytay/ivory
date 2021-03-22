@@ -115,9 +115,9 @@ void Child::engineKeyboard(int key, int action) {
 }
 
 Resource *Child::find(size_t hash) {
-    auto x = resources.find(hash);
+    auto x = supplies.find(hash);
 
-    return x == resources.end() ? (parent ? parent->find(hash) : nullptr) : (x->second.get());
+    return x == supplies.end() ? (parent ? parent->find(hash) : nullptr) : (x->second.get());
 }
 
 Bounds Engine::bounds() {
@@ -177,7 +177,7 @@ void Engine::execute() {
 }
 
 Engine::Engine(GLFWwindow *window, fs::path assets)
-    : assets(std::move(assets)), window(window), world(b2Vec2(0.0f, -10.0f)), sky(0xCCFCF8) {
+    : assets(std::move(assets)), window(window), world(b2Vec2(0.0f, 0.0f)), sky(0x0099DB) {
 
     glfwSetWindowUserPointer(window, this);
 
@@ -198,8 +198,8 @@ Engine::Engine(GLFWwindow *window, fs::path assets)
     program = loadShaderProgram(this->assets);
     glUseProgram(program);
 
-    offsetUniform = glGetUniformLocation(program, "offset");
     scaleUniform = glGetUniformLocation(program, "scale");
+    offsetUniform = glGetUniformLocation(program, "offset");
     assert(offsetUniform >= 0 && scaleUniform >= 0);
 
     int width, height;
