@@ -1,7 +1,5 @@
 #include <ores/asset-loader.h>
 
-#include <ores/assets.h>
-
 #include <rapidjson/document.h>
 
 std::pair<size_t, size_t> AssetLoader::size() {
@@ -19,7 +17,11 @@ std::pair<size_t, size_t> AssetLoader::size() {
 }
 
 AssetLoader::AssetLoader(const std::string &path, const std::string &assets)
-    : AssetLoader(assets::loadResolved({ path, fs::path(path).parent_path(), assets / fs::path("images") }), assets) { }
+    : AssetLoader(assets::loadResolved({
+        path,
+        fs::path(path).parent_path().string(),
+        (assets / fs::path("images")).string()
+    }), assets) { }
 
 AssetLoader::AssetLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     rapidjson::Document doc;
@@ -57,6 +59,8 @@ AssetLoader::AssetLoader(const std::pair<std::string, std::string> &data, const 
 
     auto imageName = meta["image"].GetString();
     image = assets::loadImage(assets::resolve({
-        imageName, fs::path(std::get<1>(data)).parent_path(), assets / fs::path("images")
+        imageName,
+        fs::path(std::get<1>(data)).parent_path().string(),
+        (assets / fs::path("images")).string()
     }));
 }

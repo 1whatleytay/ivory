@@ -20,7 +20,7 @@ namespace assets {
     }
 
     parts::TextureRange *load(parts::Texture &texture, const std::string &path) {
-        return loadAbsolute(texture, texture.component->engine.assets / path);
+        return loadAbsolute(texture, (texture.component->engine.assets / path).string());
     }
 
     parts::TextureRange *loadAbsolute(parts::Texture &texture, const std::string &path) {
@@ -42,7 +42,7 @@ namespace assets {
 
         auto relative = std::get<1>(paths);
         if (!relative.empty()) {
-            test = relative / filename;
+            test = (relative / filename).string();
 
             if (fs::exists(test))
                 return test;
@@ -50,7 +50,7 @@ namespace assets {
 
         auto normal = std::get<2>(paths);
         if (!normal.empty()) {
-            test = normal / filename;
+            test = (normal / filename).string();
 
             if (fs::exists(test))
                 return test;

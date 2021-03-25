@@ -1,7 +1,5 @@
 #include <ores/map.h>
 
-#include <ores/map-loader.h>
-
 #include <fmt/printf.h>
 
 MapBody::MapBody() : MapPtr<b2Body>(nullptr, [](b2Body *b) {
@@ -91,13 +89,13 @@ void Map::makeBodies(const MapLoader &m) {
 }
 
 Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent), frictionJoint(engine.world) {
-    MapLoader loader(path, engine.assets);
+    MapLoader loader(path, engine.assets.string());
 
     assert(loader.tilesets.size() == 1); // basically, only one thing can be bound at one time
 
     for (const auto &t : loader.tilesets) {
         const assets::ImageData &data = t.second.imageData;
-        parts::Texture *texture = assemble<parts::Texture>(data.width, data.height, data.data.get());
+        auto *texture = assemble<parts::Texture>(data.width, data.height, data.data.get());
         textures.push_back(texture);
 
         auto tileset = texture->grabTileset(t.second.tileWidth, t.second.tileHeight);
@@ -128,7 +126,7 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
             }
         }
 
-        parts::Buffer *buffer = assemble<parts::Buffer>(vertices.size());
+        auto *buffer = assemble<parts::Buffer>(vertices.size());
         layers.push_back(buffer->grab(vertices.size(), vertices.data()));
     }
 

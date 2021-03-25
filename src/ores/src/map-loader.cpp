@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 TilesetLoader::TilesetLoader(const std::string &path, const std::string &parent, const std::string &assets)
     : TilesetLoader(assets::loadResolved({
-        path, fs::path(parent).parent_path(), assets / fs::path("tilesets")
+        path, fs::path(parent).parent_path().string(), (assets / fs::path("tilesets")).string()
     }), assets) { }
 
 TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
@@ -32,8 +32,8 @@ TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, co
     auto image = tileset.child("image");
     imageData = assets::loadImage(assets::resolve({
         image.attribute("source").as_string(),
-        fs::path(std::get<1>(data)).parent_path(),
-        assets / fs::path("tilesets")
+        fs::path(std::get<1>(data)).parent_path().string(),
+        (assets / fs::path("tilesets")).string()
     }));
 
     assert(imageData.width == image.attribute("width").as_ullong()
@@ -62,7 +62,7 @@ TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, co
 
 MapLoader::MapLoader(const std::string &name, const std::string &assets)
     : MapLoader(assets::loadResolved({
-        name, fs::path(name).parent_path(), assets / fs::path("maps")
+        name, fs::path(name).parent_path().string(), (assets / fs::path("maps")).string()
     }), assets) { }
 
 MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {

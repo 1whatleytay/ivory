@@ -23,8 +23,8 @@ namespace {
             return buffer.str();
         };
 
-        std::string vertSource = getSource(assets / "shaders/vert.glsl");
-        std::string fragSource = getSource(assets / "shaders/frag.glsl");
+        std::string vertSource = getSource((assets / "shaders/vert.glsl").string());
+        std::string fragSource = getSource((assets / "shaders/frag.glsl").string());
 
         const char *vertPtr = vertSource.c_str();
         const char *fragPtr = fragSource.c_str();

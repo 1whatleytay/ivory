@@ -114,10 +114,10 @@ void Player::click(int button, int action) {
 Player::Player(Child *parent) : Child(parent) {
     client = find<Client>();
 
-    float x = client ? client->hello.playerX : 0;
-    float y = client ? client->hello.playerY : 0.5;
+    float x = client ? client->hello.playerX : 0.0f;
+    float y = client ? client->hello.playerY : 0.5f;
 
-    AssetLoader loader(engine.assets / "images/players/nate.json", engine.assets);
+    AssetLoader loader((engine.assets / "images/players/nate.json").string(), engine.assets.string());
 
     auto size = loader.size();
 
