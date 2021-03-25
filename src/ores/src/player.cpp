@@ -11,15 +11,10 @@ void Player::setAnimation(const TagInfo &animation) {
 }
 
 void Player::update(float time) {
-    if (glfwGetKey(engine.window, GLFW_KEY_A) == GLFW_PRESS)
-        box->body->setVelocity(-5, std::nullopt);
-    if (glfwGetKey(engine.window, GLFW_KEY_D) == GLFW_PRESS)
-        box->body->setVelocity(+5, std::nullopt);
-    if (glfwGetKey(engine.window, GLFW_KEY_W) == GLFW_PRESS)
-        box->body->setVelocity(std::nullopt, +5);
-    if (glfwGetKey(engine.window, GLFW_KEY_S) == GLFW_PRESS)
-        box->body->setVelocity(std::nullopt, -5);
+    float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
+    float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
+    box->body->value->SetLinearVelocity(b2Vec2(x * 5, y * 5));
 
     constexpr float frameDuration = 0.1;
     frameUpdateTime += time;
@@ -68,6 +63,36 @@ void Player::keyboard(int key, int action) {
         if (key == GLFW_KEY_U) {
             netUpdateIndex++;
         }
+
+        if (key == GLFW_KEY_A)
+            left = true;
+        if (key == GLFW_KEY_D)
+            left = false;
+    }
+
+    auto isMovementKey = [key]() {
+        return key == GLFW_KEY_A
+            || key == GLFW_KEY_D
+            || key == GLFW_KEY_W
+            || key == GLFW_KEY_S;
+    };
+
+    if (action != GLFW_REPEAT && isMovementKey()) {
+        int x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
+        int y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
+
+        if (x > 0)
+            setAnimation(walkRight);
+        else if (x < 0)
+            setAnimation(walkLeft);
+        else if (y > 0)
+            setAnimation(walkUp);
+        else if (y < 0)
+            setAnimation(walkDown);
+        else if (left)
+            setAnimation(idleLeft);
+        else
+            setAnimation(idleRight);
     }
 }
 
@@ -99,9 +124,15 @@ Player::Player(Child *parent) : Child(parent) {
     auto tex = assemble<parts::Texture>(loader.image.width, loader.image.height, loader.image.data.get());
     frames = tex->grabTileset(size.first, size.second);
 
-    idle = loader.tags["walk right"];
+    idleLeft = loader.tags["idle left"];
+    idleRight = loader.tags["idle right"];
 
-    setAnimation(idle);
+    walkLeft = loader.tags["walk left"];
+    walkRight = loader.tags["walk right"];
+    walkUp = loader.tags["walk up"];
+    walkDown = loader.tags["walk down"];
+
+    setAnimation(idleRight);
 
     box = make<parts::Box>(x, y, 0.39, 0.75, Color(0xFF0000u), 1);
     box->depth = -0.07;

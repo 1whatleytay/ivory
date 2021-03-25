@@ -186,28 +186,6 @@ namespace parts {
         return weight == 0;
     }
 
-    void BoxBody::setVelocity(std::optional<float> x, std::optional<float> y) {
-        auto velocity = value->GetLinearVelocity();
-
-        if (x)
-            velocity.x = *x;
-        if (y)
-            velocity.y = *y;
-
-        value->SetLinearVelocity(velocity);
-    }
-
-    void BoxBody::capVelocity(std::optional<float> x, std::optional<float> y) {
-        auto velocity = value->GetLinearVelocity();
-
-        if (x)
-            velocity.x = (velocity.x < 0 ? -1.0f : +1.0f) * std::min(std::abs(velocity.x), *x);
-        if (y)
-            velocity.y = (velocity.y < 0 ? -1.0f : +1.0f) * std::min(std::abs(velocity.y), *y);
-
-        value->SetLinearVelocity(velocity);
-    }
-
     BoxBody::BoxBody(Child *parent, float x, float y, float w, float h, float weight) : Child(parent), weight(weight) {
         width = w;
         height = h;

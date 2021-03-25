@@ -16,7 +16,10 @@ struct Player : public Child {
 
     void setAnimation(const TagInfo &animation);
 
-    TagInfo idle;
+    TagInfo idleRight, idleLeft;
+    TagInfo walkRight, walkLeft, walkUp, walkDown;
+
+    bool left = false;
 
     std::vector<parts::TextureRange *> frames;
 

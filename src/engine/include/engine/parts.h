@@ -76,9 +76,6 @@ namespace parts {
 
         [[nodiscard]] bool isGround() const;
 
-        void setVelocity(std::optional<float> x, std::optional<float> y);
-        void capVelocity(std::optional<float> x, std::optional<float> y);
-
         BoxBody(Child *parent, float x, float y, float width, float height, float weight = 0);
         ~BoxBody() override;
     };
