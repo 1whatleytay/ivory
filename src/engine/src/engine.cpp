@@ -11,7 +11,7 @@
 #include <sstream>
 
 namespace {
-    Handle loadShaderProgram(const fs::path &assets) {
+    Handle loadShaderProgram(const std::string &vertPath, const std::string &fragPath) {
         auto getSource = [](const std::string &path) -> std::string {
             std::ifstream stream(path);
             if (!stream.is_open())
@@ -23,8 +23,8 @@ namespace {
             return buffer.str();
         };
 
-        std::string vertSource = getSource((assets / "shaders/vert.glsl").string());
-        std::string fragSource = getSource((assets / "shaders/frag.glsl").string());
+        std::string vertSource = getSource(vertPath);
+        std::string fragSource = getSource(fragPath);
 
         const char *vertPtr = vertSource.c_str();
         const char *fragPtr = fragSource.c_str();
@@ -142,7 +142,13 @@ void Engine::click(int button, int action) const {
 }
 
 void Engine::scale(int width, int height) const {
+    glUseProgram(program);
     glUniform2f(scaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
+
+    glUseProgram(outlineProgram);
+    glUniform2f(outlineScaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
+
+    glUseProgram(program);
 }
 
 namespace {
@@ -165,7 +171,12 @@ void Engine::execute() {
 
         app->engineUpdate(static_cast<float>(current - last) / 1000.0f);
 
+        glUseProgram(program);
         glUniform2f(offsetUniform, offsetX, offsetY);
+        glUseProgram(outlineProgram);
+        glUniform2f(outlineOffsetUniform, offsetX, offsetY);
+
+        glUseProgram(program);
 
         world.Step(1 / 60.0f, 6, 2);
         app->engineDraw();
@@ -195,12 +206,22 @@ Engine::Engine(GLFWwindow *window, fs::path assets)
 
     glEnable(GL_DEPTH_TEST);
 
-    program = loadShaderProgram(this->assets);
-    glUseProgram(program);
+    program = loadShaderProgram(
+        (this->assets / "shaders/vert.glsl").string(),
+        (this->assets / "shaders/frag.glsl").string());
+    outlineProgram = loadShaderProgram(
+        (this->assets / "shaders/vert.glsl").string(),
+        (this->assets / "shaders/black.glsl").string());
 
+    glUseProgram(program);
     scaleUniform = glGetUniformLocation(program, "scale");
     offsetUniform = glGetUniformLocation(program, "offset");
     assert(offsetUniform >= 0 && scaleUniform >= 0);
+
+    glUseProgram(program);
+    outlineScaleUniform = glGetUniformLocation(outlineProgram, "scale");
+    outlineOffsetUniform = glGetUniformLocation(outlineProgram, "offset");
+    assert(outlineOffsetUniform >= 0 && outlineScaleUniform >= 0);
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);

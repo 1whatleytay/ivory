@@ -7,7 +7,7 @@ void Camera::update(float time) {
     constexpr float speed = 20;
 
     if (usePlayer && player) {
-        auto pos = player->box->body->value->GetPosition();
+        auto pos = player->body->value->GetPosition();
 
         engine.offsetX = -pos.x;
         engine.offsetY = -pos.y;

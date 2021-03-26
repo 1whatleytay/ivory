@@ -14,7 +14,13 @@ void Player::update(float time) {
     float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
     float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
-    box->body->value->SetLinearVelocity(b2Vec2(x * 5, y * 5));
+    constexpr float playerSpeed = 4;
+
+    b2Vec2 velo(x, y);
+    velo.Normalize();
+    velo *= playerSpeed;
+
+    body->value->SetLinearVelocity(velo);
 
     constexpr float frameDuration = 0.1;
     frameUpdateTime += time;
@@ -26,7 +32,23 @@ void Player::update(float time) {
 
     size_t i = currentFrame % (currentAnimation->end - currentAnimation->start + 1) + currentAnimation->start;
 
-    box->texture = frames[i];
+    auto pos = body->value->GetPosition();
+
+    visual->set(pos.x, pos.y + visualHeight / 4, visualWidth, visualHeight, *frames[i], -0.13);
+
+    size_t a = 0;
+
+    constexpr float offset = 0.03;
+
+    for (int64_t ox = -1; ox <= 1; ox++) {
+        for (int64_t oy = -1; oy <= 1; oy++) {
+            if (ox == 0 && oy == 0)
+                continue;
+
+            outlines[a++]->set(pos.x + ox * offset, pos.y + visualHeight / 4 + oy * offset,
+                visualWidth, visualHeight, *frames[i], -0.125);
+        }
+    }
 
     if (client) {
         float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
@@ -39,8 +61,6 @@ void Player::update(float time) {
                 netUpdateTime = std::fmod(netUpdateTime, timeToGo);
             }
 
-            auto pos = box->body->value->GetPosition();
-
             client->write(messages::Move {
                 client->hello.playerId,
 
@@ -50,14 +70,21 @@ void Player::update(float time) {
     }
 }
 
+void Player::draw() {
+    glUseProgram(engine.outlineProgram);
+    for (auto &o : outlines)
+        o->draw();
+    glUseProgram(engine.program);
+}
+
 void Player::keyboard(int key, int action) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_R) {
             float x = client ? client->hello.playerX : 0;
             float y = client ? client->hello.playerY : 2;
 
-            box->body->value->SetTransform(b2Vec2(x, y), 0);
-            box->body->value->SetAwake(true);
+            body->value->SetTransform(b2Vec2(x, y), 0);
+            body->value->SetAwake(true);
         }
 
         if (key == GLFW_KEY_U) {
@@ -107,7 +134,7 @@ void Player::click(int button, int action) {
         double cX = (2 * (kX / wW) - 1) * ((wW / engine.zoom) / 2) - engine.offsetX;
         double cY = -(2 * (kY / wH) - 1) * ((wH / engine.zoom) / 2) - engine.offsetY;
 
-        box->body->value->SetTransform(b2Vec2(cX, cY), 0);
+        body->value->SetTransform(b2Vec2(cX, cY), 0);
     }
 }
 
@@ -122,7 +149,13 @@ Player::Player(Child *parent) : Child(parent) {
     auto size = loader.size();
 
     auto tex = assemble<parts::Texture>(loader.image.width, loader.image.height, loader.image.data.get());
-    frames = tex->grabTileset(size.first, size.second);
+    frames.resize(loader.frames.size());
+    for (size_t a = 0; a < loader.frames.size(); a++) {
+        const FrameInfo &info = loader.frames[a];
+
+        frames[a] = tex->grab(info.x, info.y, info.width, info.height);
+        assert(frames[a]);
+    }
 
     idleLeft = loader.tags["idle left"];
     idleRight = loader.tags["idle right"];
@@ -134,6 +167,14 @@ Player::Player(Child *parent) : Child(parent) {
 
     setAnimation(idleRight);
 
-    box = make<parts::Box>(x, y, 0.39, 0.75, Color(0xFF0000u), 1);
-    box->depth = -0.07;
+    constexpr float targetHeight = 0.75;
+
+    visualHeight = targetHeight;
+    visualWidth = targetHeight / size.second * size.first;
+
+    visual = make<parts::BoxVisual>();
+    outlines.resize(8);
+    for (auto &o : outlines)
+        o = create<parts::BoxVisual>();
+    body = make<parts::BoxBody>(x, y, visualWidth, visualHeight / 2, 1);
 }

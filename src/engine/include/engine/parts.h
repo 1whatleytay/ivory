@@ -62,6 +62,7 @@ namespace parts {
         void bind() const;
 
         TextureRange *grab(size_t w, size_t h, void *data = nullptr);
+        TextureRange *grab(size_t x, size_t y, size_t w, size_t h);
         std::vector<TextureRange *> grabTileset(size_t w, size_t h);
 
         Texture(Child *component);

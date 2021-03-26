@@ -72,6 +72,21 @@ namespace parts {
     TextureRange::TextureRange(Texture *parent, size_t x, size_t y, size_t w, size_t h)
         : parent(parent), x(x), y(y), w(w), h(h) { }
 
+    TextureRange *Texture::grab(size_t x, size_t y, size_t w, size_t h) {
+        for (int64_t ox = 0; ox < w; ox++) {
+            for (int64_t oy = 0; oy < h; oy++) {
+                taken[(x + ox) + (y + oy) * width] = true;
+            }
+        }
+
+        auto range = std::make_unique<TextureRange>(this, x, y, w, h);
+
+        auto *ptr = range.get();
+        children.push_back({ nullptr, std::move(range) });
+
+        return ptr;
+    }
+
     TextureRange *Texture::grab(size_t w, size_t h, void *data) {
         for (int64_t x = 0; x < static_cast<int64_t>(width) - static_cast<int64_t>(w) + 1; x++) {
             for (int64_t y = 0; y < static_cast<int64_t>(height) - static_cast<int64_t>(h) + 1; y++) {

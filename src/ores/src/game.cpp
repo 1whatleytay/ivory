@@ -71,7 +71,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     auto *player = make<Player>();
 
     make<Camera>()->player = player;
-    make<Map>((engine.assets / "maps/map (1).xml").string(), player->box->body->value);
+    make<Map>((engine.assets / "maps/map (1).tmx").string(), player->body->value);
 }
 
 Game::~Game() {

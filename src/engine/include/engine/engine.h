@@ -28,9 +28,13 @@ struct Engine {
     b2World world;
 
     Handle program;
+    Handle outlineProgram;
 
     GLint offsetUniform;
     GLint scaleUniform;
+
+    GLint outlineOffsetUniform;
+    GLint outlineScaleUniform;
 
     Child *app = nullptr;
 
