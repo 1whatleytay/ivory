@@ -10,13 +10,9 @@ struct Options {
 
     size_t worldWidth = 40, worldHeight = 100;
 
+    std::string map = "large.tmx";
+
     std::string assetsPath;
 
     Options(int count, const char **args);
-};
-
-struct OptionsResource : public Resource {
-    const Options &value;
-
-    OptionsResource(Child *component, const Options &options);
 };

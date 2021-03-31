@@ -3,6 +3,7 @@
 #include <engine/handle.h>
 #include <engine/engine.h>
 
+#include <any>
 #include <optional>
 
 namespace parts {
@@ -75,6 +76,8 @@ namespace parts {
         float weight = 0;
         float width = 0, height = 0;
 
+//        std::any user;
+
         [[nodiscard]] bool isGround() const;
 
         BoxBody(Child *parent, float x, float y, float width, float height, float weight = 0);
@@ -85,8 +88,10 @@ namespace parts {
         BufferRange *range = nullptr;
         const TextureRange *tex = nullptr;
 
-        void set(float x, float y, float width, float height, const TextureRange &texture, float depth = 0);
-        void set(const BoxBody &body, const TextureRange &texture, float depth = 0);
+        void set(float x, float y, float width, float height, const TextureRange &texture,
+            float depth = 0, bool flipX = false, bool flipY = false);
+        void set(const BoxBody &body, const TextureRange &texture,
+            float depth = 0, bool flipX = false, bool flipY = false);
 
         void draw() override;
 
@@ -102,14 +107,29 @@ namespace parts {
 
         bool alive = true;
 
+        bool flipX = false, flipY = false;
+
         void update(float time) override;
 
         Box(Child *parent, float x, float y, float width, float height, Color color, float weight = 0);
         Box(Child *parent, float x, float y, float width, float height, TextureRange *texture, float weight = 0);
     };
 
+    template <typename T>
+    using WorldPtr = std::unique_ptr<T, std::function<void(T *)>>;
+
+    struct BodyPtr : WorldPtr<b2Body> {
+        BodyPtr();
+    };
+
+    struct JointPtr : WorldPtr<b2Joint> {
+        b2World &w;
+
+        JointPtr(b2World &w);
+    };
+
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange *texture, float depth = 0);
+            const TextureRange *texture, float depth = 0, bool flipX = false, bool flipY = false);
     }
 }

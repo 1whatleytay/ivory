@@ -17,7 +17,7 @@ struct Client : public Resource {
     tcp::socket socket;
 
     messages::Hello hello;
-    bool hasHello = false;
+    volatile bool hasHello = false;
 
     std::mutex messagesMutex;
     std::vector<Message> messages;

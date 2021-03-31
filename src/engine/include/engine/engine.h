@@ -28,13 +28,9 @@ struct Engine {
     b2World world;
 
     Handle program;
-    Handle outlineProgram;
 
     GLint offsetUniform;
     GLint scaleUniform;
-
-    GLint outlineOffsetUniform;
-    GLint outlineScaleUniform;
 
     Child *app = nullptr;
 
@@ -109,12 +105,6 @@ struct Child {
     Engine &engine;
     Child *parent = nullptr;
 
-    template <typename E>
-    E &as() { return dynamic_cast<E &>(*this); }
-
-    template <typename E>
-    E &root() { return dynamic_cast<E &>(*engine.app); }
-
     std::vector<std::unique_ptr<Child>> children;
     std::vector<std::unique_ptr<Resource>> resources;
     std::unordered_map<size_t, std::unique_ptr<Resource>> supplies;
@@ -123,6 +113,12 @@ struct Child {
     virtual void update(float time);
     virtual void click(int button, int action);
     virtual void keyboard(int key, int action);
+
+    template <typename E>
+    E &as() { return dynamic_cast<E &>(*this); }
+
+    template <typename E>
+    E &root() { return dynamic_cast<E &>(*engine.app); }
 
     void engineDraw();
     void engineUpdate(float time);

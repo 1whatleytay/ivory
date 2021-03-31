@@ -30,11 +30,19 @@ struct Layer {
     std::vector<size_t> data;
 };
 
+struct Object {
+    float x, y;
+
+    std::string type;
+    std::string color;
+};
+
 struct MapLoader {
     size_t width = 0, height = 0;
     size_t tileWidth = 0, tileHeight = 0;
 
     std::vector<Layer> layers;
+    std::vector<Object> objects;
     std::vector<std::pair<size_t, TilesetLoader>> tilesets;
 
     std::unordered_map<size_t, TileProperties> properties;

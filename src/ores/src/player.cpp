@@ -1,20 +1,25 @@
 #include <ores/player.h>
 
+#include <ores/flag.h>
 #include <ores/client.h>
 #include <ores/asset-loader.h>
 
 #include <fmt/printf.h>
 
-void Player::setAnimation(const TagInfo &animation) {
-    currentAnimation = &animation;
-    currentFrame = 0;
+void Player::setAnimation(const TagInfo &animation, bool flip) {
+    if (&animation != currentAnimation || flip != flipX) {
+        currentAnimation = &animation;
+        currentFrame = 0;
+    }
+
+    flipX = flip;
 }
 
 void Player::update(float time) {
     float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
     float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
-    constexpr float playerSpeed = 4;
+    constexpr float playerSpeed = 4.5;
 
     b2Vec2 velo(x, y);
     velo.Normalize();
@@ -34,21 +39,10 @@ void Player::update(float time) {
 
     auto pos = body->value->GetPosition();
 
-    visual->set(pos.x, pos.y + visualHeight / 4, visualWidth, visualHeight, *frames[i], -0.13);
+    visual->set(pos.x, pos.y + visualHeight / 2, visualWidth, visualHeight, *frames[i], -0.13, flipX);
 
-    size_t a = 0;
-
-    constexpr float offset = 0.03;
-
-    for (int64_t ox = -1; ox <= 1; ox++) {
-        for (int64_t oy = -1; oy <= 1; oy++) {
-            if (ox == 0 && oy == 0)
-                continue;
-
-            outlines[a++]->set(pos.x + ox * offset, pos.y + visualHeight / 4 + oy * offset,
-                visualWidth, visualHeight, *frames[i], -0.125);
-        }
-    }
+    if (holdingFlag)
+        holdingFlag->body->SetTransform(b2Vec2(pos.x, pos.y + visualHeight * 1.5f), 0);
 
     if (client) {
         float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
@@ -70,13 +64,6 @@ void Player::update(float time) {
     }
 }
 
-void Player::draw() {
-    glUseProgram(engine.outlineProgram);
-    for (auto &o : outlines)
-        o->draw();
-    glUseProgram(engine.program);
-}
-
 void Player::keyboard(int key, int action) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_R) {
@@ -95,6 +82,31 @@ void Player::keyboard(int key, int action) {
             left = true;
         if (key == GLFW_KEY_D)
             left = false;
+
+        // Interact
+        if (key == GLFW_KEY_F) {
+            b2ContactEdge *edge = body->value->GetContactList();
+
+            if (holdingFlag) {
+                holdingFlag->holdingPlayer = nullptr;
+                holdingFlag = nullptr;
+            } else {
+                while (edge) {
+                    std::any *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
+
+                    if (r && r->has_value() && r->type() == typeid(Flag *)) {
+                        Flag *flag = std::any_cast<Flag *>(*r);
+
+                        if (flag && !holdingFlag && !flag->holdingPlayer) {
+                            holdingFlag = flag;
+                            flag->holdingPlayer = this;
+                        }
+                    }
+
+                    edge = edge->next;
+                }
+            }
+        }
     }
 
     auto isMovementKey = [key]() {
@@ -109,17 +121,17 @@ void Player::keyboard(int key, int action) {
         int y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
         if (x > 0)
-            setAnimation(walkRight);
+            setAnimation(walk, false);
         else if (x < 0)
-            setAnimation(walkLeft);
+            setAnimation(walk, true);
         else if (y > 0)
-            setAnimation(walkUp);
+            setAnimation(walkUp, false);
         else if (y < 0)
-            setAnimation(walkDown);
+            setAnimation(walkDown, false);
         else if (left)
-            setAnimation(idleLeft);
+            setAnimation(idle, true);
         else
-            setAnimation(idleRight);
+            setAnimation(idle, false);
     }
 }
 
@@ -138,11 +150,13 @@ void Player::click(int button, int action) {
     }
 }
 
-Player::Player(Child *parent) : Child(parent) {
+Player::Player(Child *parent, float x, float y) : Child(parent) {
     client = find<Client>();
 
-    float x = client ? client->hello.playerX : 0.0f;
-    float y = client ? client->hello.playerY : 0.5f;
+    if (client) {
+        x = client->hello.playerX;
+        y = client->hello.playerY;
+    }
 
     AssetLoader loader((engine.assets / "images/players/nate.json").string(), engine.assets.string());
 
@@ -154,18 +168,14 @@ Player::Player(Child *parent) : Child(parent) {
         const FrameInfo &info = loader.frames[a];
 
         frames[a] = tex->grab(info.x, info.y, info.width, info.height);
-        assert(frames[a]);
     }
 
-    idleLeft = loader.tags["idle left"];
-    idleRight = loader.tags["idle right"];
+    idle = loader.tags.at("idle");
+    walk = loader.tags.at("walk");
+    walkUp = loader.tags.at("walk up");
+    walkDown = loader.tags.at("walk down");
 
-    walkLeft = loader.tags["walk left"];
-    walkRight = loader.tags["walk right"];
-    walkUp = loader.tags["walk up"];
-    walkDown = loader.tags["walk down"];
-
-    setAnimation(idleRight);
+    setAnimation(idle, false);
 
     constexpr float targetHeight = 0.75;
 
@@ -173,8 +183,5 @@ Player::Player(Child *parent) : Child(parent) {
     visualWidth = targetHeight / size.second * size.first;
 
     visual = make<parts::BoxVisual>();
-    outlines.resize(8);
-    for (auto &o : outlines)
-        o = create<parts::BoxVisual>();
     body = make<parts::BoxBody>(x, y, visualWidth, visualHeight / 2, 1);
 }

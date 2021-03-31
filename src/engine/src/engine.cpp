@@ -142,13 +142,7 @@ void Engine::click(int button, int action) const {
 }
 
 void Engine::scale(int width, int height) const {
-    glUseProgram(program);
     glUniform2f(scaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
-
-    glUseProgram(outlineProgram);
-    glUniform2f(outlineScaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
-
-    glUseProgram(program);
 }
 
 namespace {
@@ -173,10 +167,6 @@ void Engine::execute() {
 
         glUseProgram(program);
         glUniform2f(offsetUniform, offsetX, offsetY);
-        glUseProgram(outlineProgram);
-        glUniform2f(outlineOffsetUniform, offsetX, offsetY);
-
-        glUseProgram(program);
 
         world.Step(1 / 60.0f, 6, 2);
         app->engineDraw();
@@ -209,19 +199,11 @@ Engine::Engine(GLFWwindow *window, fs::path assets)
     program = loadShaderProgram(
         (this->assets / "shaders/vert.glsl").string(),
         (this->assets / "shaders/frag.glsl").string());
-    outlineProgram = loadShaderProgram(
-        (this->assets / "shaders/vert.glsl").string(),
-        (this->assets / "shaders/black.glsl").string());
 
     glUseProgram(program);
     scaleUniform = glGetUniformLocation(program, "scale");
     offsetUniform = glGetUniformLocation(program, "offset");
     assert(offsetUniform >= 0 && scaleUniform >= 0);
-
-    glUseProgram(program);
-    outlineScaleUniform = glGetUniformLocation(outlineProgram, "scale");
-    outlineOffsetUniform = glGetUniformLocation(outlineProgram, "offset");
-    assert(outlineOffsetUniform >= 0 && outlineScaleUniform >= 0);
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);

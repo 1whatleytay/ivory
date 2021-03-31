@@ -5,7 +5,7 @@
 Options::Options(int count, const char **args) {
     CLI::App app;
 
-    auto multiplayerOpt = app.add_flag("-m,--multi", multiplayer, "Enable to start using multiplayer.");
+    auto multiplayerOpt = app.add_flag("-m,--multi", multiplayer, "Multiplayer mode");
 
     app.add_option("--address", address, "Multiplayer server address")->needs(multiplayerOpt);
     app.add_option("--port", port, "Multiplayer server port")->needs(multiplayerOpt);
@@ -15,11 +15,11 @@ Options::Options(int count, const char **args) {
 
     app.add_option("-a,--assets", assetsPath, "Path to assets");
 
+    app.add_option("--map", map, "Map file name")->excludes(multiplayerOpt);
+
     try {
         app.parse(count, args);
     } catch (const CLI::ParseError &e) {
         throw std::runtime_error(e.what());
     }
 }
-
-OptionsResource::OptionsResource(Child *component, const Options &options) : Resource(component), value(options) { }

@@ -178,16 +178,18 @@ namespace parts {
         glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
-    void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture, float depth) {
+    void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture,
+        float depth, bool flipX, bool flipY) {
         tex = &texture;
 
-        range->write(shapes::square(x, y, width, height, &texture, depth).data());
+        range->write(shapes::square(x, y, width, height, &texture, depth, flipX, flipY).data());
     }
 
-    void BoxVisual::set(const BoxBody &body, const TextureRange &texture, float depth) {
+    void BoxVisual::set(const BoxBody &body, const TextureRange &texture,
+        float depth, bool flipX, bool flipY) {
         auto pos = body.value->GetPosition();
 
-        set(pos.x, pos.y, body.width, body.height, texture, depth);
+        set(pos.x, pos.y, body.width, body.height, texture, depth, flipX, flipY);
     }
 
     void BoxVisual::draw() {
@@ -209,7 +211,9 @@ namespace parts {
         bDef.fixedRotation = true;
         bDef.position = b2Vec2(x, y);
         bDef.type = isGround() ? b2_staticBody : b2_dynamicBody;
-        bDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
+
+//        user = this;
+//        bDef.userData.pointer = reinterpret_cast<uintptr_t>(&user);
 
         value = engine.world.CreateBody(&bDef);
 
@@ -231,7 +235,7 @@ namespace parts {
     void Box::update(float time) {
         // No need to bother redrawing to buffer if its static.
         if (alive)
-            visual->set(*body, *texture, depth);
+            visual->set(*body, *texture, depth, flipX, flipY);
     }
 
     Box::Box(Child *parent, float x, float y, float width, float height, Color color, float weight)
@@ -254,9 +258,18 @@ namespace parts {
         visual->set(*body, *this->texture);
     }
 
+    BodyPtr::BodyPtr() : WorldPtr<b2Body>(nullptr, [](b2Body *b) {
+        b->GetWorld()->DestroyBody(b);
+    }) { }
+
+    JointPtr::JointPtr(b2World &w) : WorldPtr<b2Joint>(nullptr, [this](b2Joint *j) {
+        this->w.DestroyJoint(j);
+    }), w(w) { }
+
+
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange *texture, float depth) {
+            const TextureRange *texture, float depth, bool flipX, bool flipY) {
             Vec3 bottomLeftPos = { x - width / 2, y - height / 2, depth };
             Vec3 bottomRightPos = { x + width / 2, y - height / 2, depth };
             Vec3 topLeftPos = { x - width / 2, y + height / 2, depth };
@@ -275,6 +288,23 @@ namespace parts {
             Vec2 bottomRightTex = { (sX + sW) / tW - shiftX, (sY + sH) / tH - shiftY };
             Vec2 topLeftTex = { sX / tW + shiftX, sY / tH + shiftY };
             Vec2 topRightTex = { (sX + sW) / tW - shiftX, sY / tH + shiftY };
+
+            auto flip = [](Vec2 &a, Vec2 &b) {
+                Vec2 temp = a;
+
+                a = b;
+                b = temp;
+            };
+
+            if (flipX) {
+                flip(bottomLeftTex, bottomRightTex);
+                flip(topLeftTex, topRightTex);
+            }
+
+            if (flipY) {
+                flip(bottomLeftTex, topLeftTex);
+                flip(bottomRightTex, topRightTex);
+            }
 
             Vertex bottomLeft = { bottomLeftPos, bottomLeftTex };
             Vertex bottomRight = { bottomRightPos, bottomRightTex };

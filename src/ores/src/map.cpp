@@ -1,14 +1,10 @@
 #include <ores/map.h>
 
+#include <ores/flag.h>
+#include <ores/player.h>
+#include <ores/resources.h>
+
 #include <fmt/printf.h>
-
-MapBody::MapBody() : MapPtr<b2Body>(nullptr, [](b2Body *b) {
-    b->GetWorld()->DestroyBody(b);
-}) { }
-
-MapJoint::MapJoint(b2World &w) : MapPtr<b2Joint>(nullptr, [this](b2Joint *j) {
-    this->w.DestroyJoint(j);
-}), w(w) { }
 
 void Map::draw() {
     textures.front()->bind();
@@ -37,8 +33,6 @@ void Map::makeBodies(const MapLoader &m) {
             }
         }
     }
-
-//    auto r = assemble<parts::Texture>()->grab(1, 1, Color(0x0000FF).data().data());
 
     for (int64_t y = 0; y < m.height; y++) {
         for (int64_t x = 0; x < m.width; x++) {
@@ -78,17 +72,15 @@ void Map::makeBodies(const MapLoader &m) {
 
             // only one block long and tall
             bodies.push_back(hold<parts::BoxBody>(
-                x * tileWidth + (w - 1) * tileWidth / 2 , -y * tileWidth - h * tileWidth / 2 + tileWidth / 2,
-                tileWidth * w, tileWidth * h));
-
-//            auto visual = make<parts::BoxVisual>();
-//            visual->set(x * tileWidth + (w - 1) * tileWidth / 2 , -y * tileWidth - h * tileWidth / 2 + tileWidth / 2,
-//                tileWidth * w, tileWidth * h, *r, -0.1);
+                x * tileSize + (w - 1) * tileSize / 2 + 0.5f, -y * tileSize - h * tileSize / 2 + tileSize / 2 - 0.5f,
+                tileSize * w, tileSize * h));
         }
     }
 }
 
-Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent), frictionJoint(engine.world) {
+Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(engine.world) {
+    Resources *resources = find<Resources>();
+
     MapLoader loader(path, engine.assets.string());
 
     assert(loader.tilesets.size() == 1); // basically, only one thing can be bound at one time
@@ -108,7 +100,8 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
     for (const auto &l : loader.layers) {
         depth -= 0.02;
 
-        std::vector<Vertex> vertices(l.width * l.height * 6);
+        std::vector<Vertex> vertices;
+        vertices.reserve(l.width * l.height * 6);
 
         for (int64_t x = 0; x < l.width; x++) {
             for (int64_t y = 0; y < l.height; y++) {
@@ -117,17 +110,31 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
                 auto j = tiles.find(i);
                 auto exists = j != tiles.end();
 
-                float size = exists ? tileWidth : 0;
+                float size = exists ? tileSize : 0;
 
-                auto v = parts::shapes::square(x * tileWidth, -y * tileWidth,
+                auto v = parts::shapes::square(x * tileSize + 0.5f, -y * tileSize - 0.5f,
                     size, size, exists ? j->second : nullptr, depth);
 
-                std::copy(v.begin(), v.end(), vertices.begin() + ((x + y * l.width) * 6));
+                vertices.insert(vertices.end(), v.begin(), v.end());
             }
         }
 
         auto *buffer = assemble<parts::Buffer>(vertices.size());
         layers.push_back(buffer->grab(vertices.size(), vertices.data()));
+    }
+
+    assert(!resources->player);
+
+    for (const auto &o : loader.objects) {
+        if (o.type == "spawn") {
+            if (o.color == "red") {
+                resources->player = make<Player>(o.x, o.y);
+            }
+        } else if (o.type == "flag") {
+            make<Flag>(o.color, o.x, o.y);
+        } else {
+            throw std::exception();
+        }
     }
 
     b2BodyDef bDef;
@@ -137,7 +144,7 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
     frictionBody.reset(engine.world.CreateBody(&bDef));
 
     b2PolygonShape fShape;
-    fShape.SetAsBox(tileWidth * loader.width, tileWidth * loader.height);
+    fShape.SetAsBox(tileSize * loader.width, tileSize * loader.height);
 
     b2FixtureDef fDef;
     fDef.shape = &fShape;
@@ -147,7 +154,7 @@ Map::Map(Child *parent, const std::string &path, b2Body *player) : Child(parent)
     frictionBody->CreateFixture(&fDef);
 
     b2FrictionJointDef jDef;
-    jDef.Initialize(player, frictionBody.get(), b2Vec2_zero);
+    jDef.Initialize(resources->player->body->value, frictionBody.get(), b2Vec2_zero);
 
     jDef.maxForce = 10;
     jDef.maxTorque = 0;

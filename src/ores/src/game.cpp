@@ -5,10 +5,11 @@
 #include <ores/player.h>
 #include <ores/client.h>
 #include <ores/options.h>
+#include <ores/resources.h>
 
 void Game::update(float time) {
-    if (client) {
-        std::lock_guard guard(client->messagesMutex);
+    if (resources->client) {
+        std::lock_guard guard(resources->client->messagesMutex);
 
         struct {
             Game& game;
@@ -18,7 +19,7 @@ void Game::update(float time) {
             void operator()(const messages::Hello& h) {  }
 
             void operator()(const messages::Move& m) {
-                assert(m.playerId != game.client->hello.playerId);
+                assert(m.playerId != game.resources->client->hello.playerId);
 
                 NetPlayer* player;
 
@@ -35,7 +36,7 @@ void Game::update(float time) {
                 player->y = m.y;
             }
             void operator()(const messages::Disconnect& d) {
-                assert(d.playerId != game.client->hello.playerId);
+                assert(d.playerId != game.resources->client->hello.playerId);
 
                 auto iterator = game.netPlayers.find(d.playerId);
                 assert(iterator != game.netPlayers.end());
@@ -44,39 +45,37 @@ void Game::update(float time) {
             }
         } visitor { *this };
 
-        for (const Message& message : client->messages)
+        for (const Message& message : resources->client->messages)
             std::visit(visitor, message);
 
-        client->messages.clear();
+        resources->client->messages.clear();
     }
 }
 
 Game::Game(Engine &engine, const Options &options) : Child(engine) {
-    supply<OptionsResource>(options);
+    resources = supply<Resources>(options);
 
     supply<parts::Buffer>(600);
     supply<parts::Texture>(200, 200);
 
     if (options.multiplayer) {
         try {
-            client = supply<Client>(options.address, std::to_string(options.port));
-            clientThread = std::make_unique<std::thread>([this]() { client->run(); });
+            resources->client = supply<Client>(options.address, std::to_string(options.port));
+            clientThread = std::make_unique<std::thread>([this]() { resources->client->run(); });
 
-            while (!client->hasHello);
+            while (!resources->client->hasHello);
         } catch (const std::exception &e) {
             throw;
         }
     }
 
-    auto *player = make<Player>();
-
-    make<Camera>()->player = player;
-    make<Map>((engine.assets / "maps/map (1).tmx").string(), player->body->value);
+    make<Camera>();
+    make<Map>((engine.assets / "maps" / options.map).string());
 }
 
 Game::~Game() {
-    if (client) {
-        client->context.stop();
+    if (resources->client) {
+        resources->client->context.stop();
         clientThread->join();
     }
 }

@@ -4,23 +4,23 @@
 
 #include <ores/asset-loader.h>
 
+struct Flag;
 struct Client;
 
 struct Player : public Child {
     parts::BoxBody *body = nullptr;
-
     parts::BoxVisual *visual = nullptr;
-    std::vector<std::unique_ptr<parts::BoxVisual>> outlines;
 
     Client *client = nullptr;
+    Flag *holdingFlag = nullptr;
 
+    bool flipX = false;
     const TagInfo *currentAnimation = nullptr;
     size_t currentFrame = 0;
 
-    void setAnimation(const TagInfo &animation);
+    void setAnimation(const TagInfo &animation, bool flipX);
 
-    TagInfo idleRight, idleLeft;
-    TagInfo walkRight, walkLeft, walkUp, walkDown;
+    TagInfo idle, walk, walkUp, walkDown;
 
     float visualWidth = 0, visualHeight = 0;
 
@@ -35,11 +35,9 @@ struct Player : public Child {
 
     float frameUpdateTime = 0;
 
-    void draw() override;
-
     void update(float time) override;
     void keyboard(int key, int action) override;
     void click(int button, int action) override;
 
-    explicit Player(Child *parent);
+    explicit Player(Child *parent, float x = 0, float y = 0.5);
 };

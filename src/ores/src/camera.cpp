@@ -1,13 +1,13 @@
 #include <ores/camera.h>
 
 #include <ores/player.h>
-#include <ores/background.h>
+#include <ores/resources.h>
 
 void Camera::update(float time) {
     constexpr float speed = 20;
 
-    if (usePlayer && player) {
-        auto pos = player->body->value->GetPosition();
+    if (usePlayer && resources->player) {
+        auto pos = resources->player->body->value->GetPosition();
 
         engine.offsetX = -pos.x;
         engine.offsetY = -pos.y;
@@ -48,6 +48,4 @@ void Camera::keyboard(int key, int action) {
     }
 }
 
-Camera::Camera(Child *parent) : Child(parent) {
-//    make<Background>();
-}
+Camera::Camera(Child *parent) : Child(parent), resources(find<Resources>()) { }

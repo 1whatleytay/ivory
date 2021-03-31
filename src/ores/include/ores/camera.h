@@ -3,10 +3,12 @@
 #include <engine/engine.h>
 
 struct Player;
+struct Resources;
 
 struct Camera : public Child {
+    Resources *resources = nullptr;
+
     bool usePlayer = true;
-    Player *player = nullptr;
 
     void update(float time) override;
     void keyboard(int key, int action) override;

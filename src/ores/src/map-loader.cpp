@@ -122,6 +122,29 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
         layers.push_back({ l.attribute("name").as_string(), w, h, std::move(result) });
     }
 
+    for (const auto &g : map.children("objectgroup")) {
+        for (const auto &o : g.children("object")) {
+            std::string type, color;
+            for (const auto &p : o.child("properties")) {
+                auto name = p.attribute("name").as_string();
+                auto value = p.attribute("value");
+
+                if (std::strcmp(name, "type") == 0)
+                    type = value.as_string();
+                else if (std::strcmp(name, "color") == 0)
+                    color = value.as_string();
+                else
+                    throw std::exception();
+            }
+
+            objects.push_back({
+                o.attribute("x").as_float() / tileWidth, -o.attribute("y").as_float() / tileHeight,
+
+                type, color
+            });
+        }
+    }
+
     for (const auto &t : tilesets) {
         for (const auto &p : t.second.properties) {
             properties[t.first + p.first] = p.second;

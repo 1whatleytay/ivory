@@ -8,9 +8,10 @@
 
 struct Client;
 struct Options;
+struct Resources;
 
 struct Game : public Child {
-    Client *client = nullptr;
+    Resources *resources = nullptr;
     std::unique_ptr<std::thread> clientThread;
 
     std::unordered_map<size_t, NetPlayer *> netPlayers;
