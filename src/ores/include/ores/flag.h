@@ -13,6 +13,10 @@ struct Flag : public Child {
     parts::BodyPtr body;
     std::any user;
 
+    float spawnX = 0, spawnY = 0;
+
+    void reset();
+
     Player *holdingPlayer = nullptr;
 
     void update(float time) override;

@@ -1,17 +1,20 @@
 #include <ores/map.h>
 
+#include <ores/font.h>
 #include <ores/flag.h>
 #include <ores/player.h>
+#include <ores/capture.h>
 #include <ores/resources.h>
 
 #include <fmt/printf.h>
 
-void Map::draw() {
-    textures.front()->bind();
-
-    for (const auto &l : layers)
-        l->draw();
+void MapDrawLayer::draw() {
+    texture->bind();
+    buffer->draw();
 }
+
+MapDrawLayer::MapDrawLayer(Child *parent, parts::BufferRange *buffer, parts::Texture *texture)
+    : Child(parent), buffer(buffer), texture(texture) { }
 
 void Map::makeBodies(const MapLoader &m) {
     bodies.clear();
@@ -95,11 +98,7 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
             tiles[t.first + a] = tileset[a];
     }
 
-    float depth = 0;
-
     for (const auto &l : loader.layers) {
-        depth -= 0.02;
-
         std::vector<Vertex> vertices;
         vertices.reserve(l.width * l.height * 6);
 
@@ -113,25 +112,34 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
                 float size = exists ? tileSize : 0;
 
                 auto v = parts::shapes::square(x * tileSize + 0.5f, -y * tileSize - 0.5f,
-                    size, size, exists ? j->second : nullptr, depth);
+                    size, size, exists ? j->second : nullptr);
 
                 vertices.insert(vertices.end(), v.begin(), v.end());
             }
         }
 
         auto *buffer = assemble<parts::Buffer>(vertices.size());
-        layers.push_back(buffer->grab(vertices.size(), vertices.data()));
+        layers.push_back(make<MapDrawLayer>(buffer->grab(vertices.size(), vertices.data()), textures.front()));
     }
 
     assert(!resources->player);
 
     for (const auto &o : loader.objects) {
         if (o.type == "spawn") {
-            if (o.color == "red") {
-                resources->player = make<Player>(o.x, o.y);
+            if (o.team == "red") {
+                if (resources->player)
+                    continue;
+
+                resources->player = make<Player>(o.team, o.x, o.y);
+                make<FontText>()->set("Hello World!", o.x, o.y);
+
+                if (loader.playerLayer != -1) {
+                    resources->player->layerAfter(layers[loader.playerLayer]);
+                }
             }
         } else if (o.type == "flag") {
-            make<Flag>(o.color, o.x, o.y);
+            make<Flag>(o.team, o.x, o.y);
+            make<Capture>(o.team, o.x, o.y);
         } else {
             throw std::exception();
         }

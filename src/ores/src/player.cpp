@@ -2,6 +2,7 @@
 
 #include <ores/flag.h>
 #include <ores/client.h>
+#include <ores/capture.h>
 #include <ores/asset-loader.h>
 
 #include <fmt/printf.h>
@@ -15,7 +16,7 @@ void Player::setAnimation(const TagInfo &animation, bool flip) {
     flipX = flip;
 }
 
-void Player::update(float time) {
+void Player::doMovement() {
     float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
     float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
@@ -26,7 +27,9 @@ void Player::update(float time) {
     velo *= playerSpeed;
 
     body->value->SetLinearVelocity(velo);
+}
 
+void Player::doAnimation(float time) {
     constexpr float frameDuration = 0.1;
     frameUpdateTime += time;
 
@@ -39,28 +42,59 @@ void Player::update(float time) {
 
     auto pos = body->value->GetPosition();
 
-    visual->set(pos.x, pos.y + visualHeight / 2, visualWidth, visualHeight, *frames[i], -0.13, flipX);
+    visual->set(pos.x, pos.y + visualHeight / 2, visualWidth, visualHeight, *frames[i], flipX);
+}
+
+void Player::doNetwork(float time) {
+    if (!client)
+        return;
+    float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
+
+    auto pos = body->value->GetPosition();
+
+    netUpdateTime += time;
+    if (netUpdateTime > timeToGo) {
+        if (timeToGo == 0) {
+            netUpdateTime = 0;
+        } else {
+            netUpdateTime = std::fmod(netUpdateTime, timeToGo);
+        }
+
+        client->write(messages::Move {
+            client->hello.playerId,
+
+            pos.x, pos.y
+        });
+    }
+}
+
+void Player::update(float time) {
+    doMovement();
+    doAnimation(time);
+    doNetwork(time);
+
+    auto pos = body->value->GetPosition();
 
     if (holdingFlag)
         holdingFlag->body->SetTransform(b2Vec2(pos.x, pos.y + visualHeight * 1.5f), 0);
 
-    if (client) {
-        float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
+    b2ContactEdge *edge = body->value->GetContactList();
 
-        netUpdateTime += time;
-        if (netUpdateTime > timeToGo) {
-            if (timeToGo == 0) {
-                netUpdateTime = 0;
-            } else {
-                netUpdateTime = std::fmod(netUpdateTime, timeToGo);
+    while (edge) {
+        std::any *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
+
+        if (r && r->has_value() && r->type() == typeid(Capture *)) {
+            auto *point = std::any_cast<Capture *>(*r);
+
+            // If player is holding a flag and the point is the player's point and
+            if (point && holdingFlag && holdingFlag->color != color && point->color == color) {
+                holdingFlag->reset(); // this will holdingFlag = nullptr for me :flushed:
+
+                fmt::print("Score for team {}!\n", color);
             }
-
-            client->write(messages::Move {
-                client->hello.playerId,
-
-                pos.x, pos.y
-            });
         }
+
+        edge = edge->next;
     }
 }
 
@@ -85,12 +119,12 @@ void Player::keyboard(int key, int action) {
 
         // Interact
         if (key == GLFW_KEY_F) {
-            b2ContactEdge *edge = body->value->GetContactList();
-
             if (holdingFlag) {
                 holdingFlag->holdingPlayer = nullptr;
                 holdingFlag = nullptr;
             } else {
+                b2ContactEdge *edge = body->value->GetContactList();
+
                 while (edge) {
                     std::any *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
 
@@ -150,7 +184,7 @@ void Player::click(int button, int action) {
     }
 }
 
-Player::Player(Child *parent, float x, float y) : Child(parent) {
+Player::Player(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
     client = find<Client>();
 
     if (client) {

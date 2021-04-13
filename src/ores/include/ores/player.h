@@ -11,6 +11,8 @@ struct Player : public Child {
     parts::BoxBody *body = nullptr;
     parts::BoxVisual *visual = nullptr;
 
+    std::string color;
+
     Client *client = nullptr;
     Flag *holdingFlag = nullptr;
 
@@ -35,9 +37,13 @@ struct Player : public Child {
 
     float frameUpdateTime = 0;
 
+    void doMovement();
+    void doAnimation(float time);
+    void doNetwork(float time);
+
     void update(float time) override;
     void keyboard(int key, int action) override;
     void click(int button, int action) override;
 
-    explicit Player(Child *parent, float x = 0, float y = 0.5);
+    explicit Player(Child *parent, std::string color, float x = 0, float y = 0.5);
 };

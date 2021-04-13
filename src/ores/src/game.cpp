@@ -1,6 +1,7 @@
 #include <ores/game.h>
 
 #include <ores/map.h>
+#include <ores/font.h>
 #include <ores/camera.h>
 #include <ores/player.h>
 #include <ores/client.h>
@@ -57,6 +58,8 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
 
     supply<parts::Buffer>(600);
     supply<parts::Texture>(200, 200);
+
+    resources->font = supply<Font>(engine.assets / "fonts/Quicksand-Bold.ttf");
 
     if (options.multiplayer) {
         try {

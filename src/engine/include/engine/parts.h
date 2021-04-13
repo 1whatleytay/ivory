@@ -12,7 +12,8 @@ namespace parts {
     struct BufferRange {
         Buffer *parent = nullptr;
 
-        size_t begin = 0, size = 0;
+        size_t begin = 0;
+        size_t size = 0;
 
         void draw() const;
         BufferRange &write(void *data);
@@ -23,12 +24,14 @@ namespace parts {
     struct Buffer : public Resource {
         size_t vertices = 0;
 
-        size_t allocated = 0;
+        std::vector<bool> taken;
 
         Handle buffer;
         Handle vao;
 
         std::vector<std::pair<std::unique_ptr<Buffer>, std::unique_ptr<BufferRange>>> children;
+
+        void free(BufferRange * &ptr);
 
         void bind() const;
 
@@ -60,14 +63,16 @@ namespace parts {
         Handle texture;
         Handle sampler;
 
+        void free(TextureRange * &ptr);
+
         void bind() const;
 
         TextureRange *grab(size_t w, size_t h, void *data = nullptr);
         TextureRange *grab(size_t x, size_t y, size_t w, size_t h);
         std::vector<TextureRange *> grabTileset(size_t w, size_t h);
 
-        Texture(Child *component);
-        Texture(Child *component, size_t width, size_t height, void *data = nullptr);
+        Texture(Child *component, GLenum filter = GL_NEAREST);
+        Texture(Child *component, size_t width, size_t height, void *data = nullptr, GLenum filter = GL_NEAREST);
     };
 
     struct BoxBody : public Child {
@@ -89,9 +94,9 @@ namespace parts {
         const TextureRange *tex = nullptr;
 
         void set(float x, float y, float width, float height, const TextureRange &texture,
-            float depth = 0, bool flipX = false, bool flipY = false);
+            bool flipX = false, bool flipY = false);
         void set(const BoxBody &body, const TextureRange &texture,
-            float depth = 0, bool flipX = false, bool flipY = false);
+            bool flipX = false, bool flipY = false);
 
         void draw() override;
 
@@ -103,7 +108,6 @@ namespace parts {
         BoxVisual *visual;
 
         TextureRange *texture;
-        float depth = 0;
 
         bool alive = true;
 
@@ -130,6 +134,6 @@ namespace parts {
 
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange *texture, float depth = 0, bool flipX = false, bool flipY = false);
+            const TextureRange *texture, bool flipX = false, bool flipY = false);
     }
 }

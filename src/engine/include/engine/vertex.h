@@ -14,13 +14,6 @@ struct Vec2 {
     Vec2(float x, float y);
 };
 
-struct Vec3 {
-    float x = 0, y = 0, depth = 0;
-
-    Vec3() = default;
-    Vec3(float x, float y, float depth);
-};
-
 struct Color {
     float red = 0, green = 0, blue = 0;
 
@@ -31,7 +24,7 @@ struct Color {
 };
 
 struct Vertex {
-    Vec3 position;
+    Vec2 position;
     Vec2 texCoord;
 
     static void mark();

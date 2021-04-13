@@ -1,7 +1,6 @@
 #include <engine/vertex.h>
 
 Vec2::Vec2(float x, float y) : x(x), y(y) { }
-Vec3::Vec3(float x, float y, float depth) : x(x), y(y), depth(depth) { }
 
 std::array<uint8_t, 4> Color::data() const {
     return {

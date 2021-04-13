@@ -48,7 +48,7 @@
  </tile>
  <tile id="9">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="10">

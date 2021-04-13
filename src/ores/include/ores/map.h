@@ -4,13 +4,22 @@
 
 #include <engine/parts.h>
 
+struct MapDrawLayer : public Child {
+    parts::BufferRange *buffer = nullptr;
+    parts::Texture *texture = nullptr;
+
+    void draw() override;
+
+    MapDrawLayer(Child *parent, parts::BufferRange *buffer, parts::Texture *texture);
+};
+
 struct Map : public Child {
     static constexpr float tileSize = 1.0f;
 
     std::vector<parts::Texture *> textures;
     std::unordered_map<size_t, parts::TextureRange *> tiles;
 
-    std::vector<parts::BufferRange *> layers;
+    std::vector<MapDrawLayer *> layers;
 
     std::vector<Holder<parts::BoxBody>> bodies;
 
@@ -18,8 +27,6 @@ struct Map : public Child {
     parts::JointPtr frictionJoint;
 
     void makeBodies(const MapLoader &m);
-
-    void draw() override;
 
     Map(Child *parent, const std::string &path);
 };

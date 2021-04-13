@@ -119,20 +119,38 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
 
         assert(w * h == result.size() && width == w && height == h);
 
-        layers.push_back({ l.attribute("name").as_string(), w, h, std::move(result) });
+        auto props = l.child("properties").children("property");
+
+        for (const auto &p : props) {
+            if (std::strcmp(p.attribute("name").as_string(), "player") == 0) {
+                assert(std::strcmp(p.attribute("type").as_string(), "bool") == 0);
+
+                if (p.attribute("value").as_bool()) {
+                    assert(playerLayer == -1);
+
+                    playerLayer = layers.size();
+                }
+            }
+        }
+
+        layers.push_back({
+            l.attribute("name").as_string(),
+            w, h,
+            std::move(result)
+        });
     }
 
     for (const auto &g : map.children("objectgroup")) {
         for (const auto &o : g.children("object")) {
-            std::string type, color;
+            std::string type, team;
             for (const auto &p : o.child("properties")) {
                 auto name = p.attribute("name").as_string();
                 auto value = p.attribute("value");
 
                 if (std::strcmp(name, "type") == 0)
                     type = value.as_string();
-                else if (std::strcmp(name, "color") == 0)
-                    color = value.as_string();
+                else if (std::strcmp(name, "team") == 0)
+                    team = value.as_string();
                 else
                     throw std::exception();
             }
@@ -140,7 +158,7 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
             objects.push_back({
                 o.attribute("x").as_float() / tileWidth, -o.attribute("y").as_float() / tileHeight,
 
-                type, color
+                type, team
             });
         }
     }

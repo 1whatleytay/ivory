@@ -24,36 +24,62 @@ namespace parts {
     }
 
     BufferRange *Buffer::grab(size_t count, void *data) {
-        if (allocated + count > vertices) {
-            auto owned = std::make_unique<Buffer>(component, count);
-            owned->allocated = count;
+        for (size_t begin = 0; begin < vertices; begin++) {
+            bool blocked = false;
 
-            auto range = std::make_unique<BufferRange>(owned.get(), 0, count);
+            for (size_t a = 0; a < count; a++) {
+                if (taken[begin + a]) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            if (blocked)
+                continue;
+
+            std::fill(taken.begin() + begin, taken.begin() + begin + count, true);
+
+            auto range = std::make_unique<BufferRange>(this, begin, count);
             auto *ptr = range.get();
 
             if (data)
                 range->write(data);
 
-            children.push_back(std::make_pair(std::move(owned), std::move(range)));
+            children.push_back(std::make_pair(nullptr, std::move(range)));
 
             return ptr;
         }
 
-        size_t start = allocated;
-        allocated += count;
+        auto owned = std::make_unique<Buffer>(component, count);
+        std::fill(owned->taken.begin(), owned->taken.end(), true);
 
-        auto range = std::make_unique<BufferRange>(this, start, count);
+        auto range = std::make_unique<BufferRange>(owned.get(), 0, count);
         auto *ptr = range.get();
 
         if (data)
             range->write(data);
 
-        children.push_back(std::make_pair(nullptr, std::move(range)));
+        children.push_back(std::make_pair(std::move(owned), std::move(range)));
 
         return ptr;
     }
 
-    Buffer::Buffer(Child *component, size_t vertices) : Resource(component), vertices(vertices),
+    void Buffer::free(BufferRange * &ptr) {
+        auto it = std::find_if(children.begin(), children.end(), [ptr](const auto &e) {
+            return e.second.get() == ptr;
+        });
+
+        if (it == children.end())
+            return;
+
+        std::fill(taken.begin() + ptr->begin, taken.begin() + ptr->begin + ptr->size, false);
+
+        children.erase(it);
+
+        ptr = nullptr;
+    }
+
+    Buffer::Buffer(Child *component, size_t vertices) : Resource(component), vertices(vertices), taken(vertices),
         buffer(glGenBuffers, glDeleteBuffers), vao(glGenVertexArrays, glDeleteVertexArrays) {
 
         bind();
@@ -87,6 +113,25 @@ namespace parts {
         return ptr;
     }
 
+    void Texture::free(TextureRange * &ptr) {
+        auto it = std::find_if(children.begin(), children.end(), [ptr](const auto &e) {
+            return e.second.get() == ptr;
+        });
+
+        if (it == children.end())
+            return;
+
+        for (size_t oy = 0; oy < ptr->h; oy++) {
+            auto start = taken.begin() + ptr->x + (ptr->y + oy) * width;
+
+            std::fill(start, start + ptr->w, false);
+        }
+
+        children.erase(it);
+
+        ptr = nullptr;
+    }
+
     TextureRange *Texture::grab(size_t w, size_t h, void *data) {
         for (int64_t x = 0; x < static_cast<int64_t>(width) - static_cast<int64_t>(w) + 1; x++) {
             for (int64_t y = 0; y < static_cast<int64_t>(height) - static_cast<int64_t>(h) + 1; y++) {
@@ -105,10 +150,10 @@ namespace parts {
                 }
 
                 if (!blocked) {
-                    for (size_t ox = 0; ox < w; ox++) {
-                        for (size_t oy = 0; oy < h; oy++) {
-                            taken[(x + ox) + (y + oy) * width] = true;
-                        }
+                    for (size_t oy = 0; oy < h; oy++) {
+                        auto start = taken.begin() + x + (y + oy) * width;
+
+                        std::fill(start, start + w, true);
                     }
 
                     auto range = std::make_unique<TextureRange>(this, x, y, w, h);
@@ -166,30 +211,30 @@ namespace parts {
         glBindSampler(0, sampler);
     }
 
-    Texture::Texture(Child *component) : Texture(component, 0, 0) { }
+    Texture::Texture(Child *component, GLenum filter) : Texture(component, 0, 0, nullptr, filter) { }
 
-    Texture::Texture(Child *component, size_t width, size_t height, void *data) : Resource(component),
+    Texture::Texture(Child *component, size_t width, size_t height, void *data, GLenum filter) : Resource(component),
         width(width), height(height), taken(width * height),
         texture(glGenTextures, glDeleteTextures), sampler(glGenSamplers, glDeleteSamplers) {
 
         bind();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
     }
 
     void BoxVisual::set(float x, float y, float width, float height, const TextureRange &texture,
-        float depth, bool flipX, bool flipY) {
+        bool flipX, bool flipY) {
         tex = &texture;
 
-        range->write(shapes::square(x, y, width, height, &texture, depth, flipX, flipY).data());
+        range->write(shapes::square(x, y, width, height, &texture, flipX, flipY).data());
     }
 
     void BoxVisual::set(const BoxBody &body, const TextureRange &texture,
-        float depth, bool flipX, bool flipY) {
+        bool flipX, bool flipY) {
         auto pos = body.value->GetPosition();
 
-        set(pos.x, pos.y, body.width, body.height, texture, depth, flipX, flipY);
+        set(pos.x, pos.y, body.width, body.height, texture, flipX, flipY);
     }
 
     void BoxVisual::draw() {
@@ -235,7 +280,7 @@ namespace parts {
     void Box::update(float time) {
         // No need to bother redrawing to buffer if its static.
         if (alive)
-            visual->set(*body, *texture, depth, flipX, flipY);
+            visual->set(*body, *texture, flipX, flipY);
     }
 
     Box::Box(Child *parent, float x, float y, float width, float height, Color color, float weight)
@@ -269,11 +314,11 @@ namespace parts {
 
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,
-            const TextureRange *texture, float depth, bool flipX, bool flipY) {
-            Vec3 bottomLeftPos = { x - width / 2, y - height / 2, depth };
-            Vec3 bottomRightPos = { x + width / 2, y - height / 2, depth };
-            Vec3 topLeftPos = { x - width / 2, y + height / 2, depth };
-            Vec3 topRightPos = { x + width / 2, y + height / 2, depth };
+            const TextureRange *texture, bool flipX, bool flipY) {
+            Vec2 bottomLeftPos = { x - width / 2, y - height / 2 };
+            Vec2 bottomRightPos = { x + width / 2, y - height / 2 };
+            Vec2 topLeftPos = { x - width / 2, y + height / 2 };
+            Vec2 topRightPos = { x + width / 2, y + height / 2 };
 
             float tW = texture ? texture->parent->width : 1;
             float tH = texture ? texture->parent->height : 1;

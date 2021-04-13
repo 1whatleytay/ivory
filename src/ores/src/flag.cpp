@@ -1,6 +1,7 @@
 #include <ores/flag.h>
 
 #include <ores/assets.h>
+#include <ores/player.h>
 
 #include <fmt/format.h>
 
@@ -8,12 +9,21 @@ void Flag::update(float time) {
     auto pos = body->GetPosition();
 
     if (holdingPlayer)
-        visual->set(pos.x, pos.y, 0.4f, 0.4f, *texture, -0.600);
+        visual->set(pos.x, pos.y, 0.4f, 0.4f, *texture);
     else
-        visual->set(pos.x, pos.y, 1, 1, *texture, -0.125);
+        visual->set(pos.x, pos.y, 1, 1, *texture);
 }
 
-Flag::Flag(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
+void Flag::reset() {
+    holdingPlayer->holdingFlag = nullptr;
+    holdingPlayer = nullptr;
+
+    body->SetTransform(b2Vec2(spawnX, spawnY), 0);
+}
+
+Flag::Flag(Child *parent, std::string color, float x, float y)
+    : Child(parent), color(std::move(color)), spawnX(x), spawnY(y) {
+
     texture = assets::load(*get<parts::Texture>(0, 0), fmt::format("images/objects/{}_flag.png", this->color));
 
     visual = make<parts::BoxVisual>();

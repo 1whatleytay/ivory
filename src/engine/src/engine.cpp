@@ -82,42 +82,64 @@ namespace {
 
 Resource::Resource(Child *component) : component(component) { }
 
-Child::Child(Engine &engine) : engine(engine) { }
-Child::Child(Child *parent) : parent(parent), engine(parent->engine) { }
+Child::Child(Engine &engine) : engine(engine) {
+    engine.drawList.push_back(this);
+}
+
+Child::Child(Child *parent) : parent(parent), engine(parent->engine) {
+    engine.drawList.push_back(this);
+}
+
+Child::~Child() {
+    auto &list = engine.drawList;
+    auto iterator = std::find(list.begin(), list.end(), this);
+
+    if (iterator != list.end())
+        list.erase(iterator);
+}
+
+void Child::layerAfter(Child *e) {
+    auto &list = engine.drawList;
+
+    using it = decltype(engine.drawList)::iterator;
+
+    auto i = list.end();
+    auto t = list.end();
+
+    auto isValid = [&i, &t, &list]() {
+        return i != list.end() && t != list.end();
+    };
+
+    for (auto b = list.begin(); b != list.end() && !isValid(); b++) {
+        if (*b == this)
+            t = b;
+        else if (*b == e)
+            i = b;
+    }
+
+    if (!isValid())
+        return;
+
+    if (t > i) {
+        std::rotate(i + 1, t, t + 1);
+    } else {
+        std::rotate(
+            list.rbegin() + std::distance(i, list.end()) - 1,
+            list.rbegin() + std::distance(t, list.end()) - 1,
+            list.rbegin() + std::distance(t, list.end())
+        );
+    }
+}
 
 void Child::draw() { }
 void Child::update(float time) { }
 void Child::click(int button, int action) { }
 void Child::keyboard(int key, int action) { }
 
-void Child::engineDraw() {
-    draw();
+Resource *Child::find(std::type_index i) {
+    auto x = supplies.find(i);
 
-    for (const auto &c : children) c->engineDraw();
-}
-
-void Child::engineUpdate(float time) {
-    update(time);
-
-    for (const auto &c : children) c->engineUpdate(time);
-}
-
-void Child::engineClick(int button, int action) {
-    click(button, action);
-
-    for (const auto &c : children) c->engineClick(button, action);
-}
-
-void Child::engineKeyboard(int key, int action) {
-    keyboard(key, action);
-
-    for (const auto &c : children) c->engineKeyboard(key, action);
-}
-
-Resource *Child::find(size_t hash) {
-    auto x = supplies.find(hash);
-
-    return x == supplies.end() ? (parent ? parent->find(hash) : nullptr) : (x->second.get());
+    return x == supplies.end() ? (parent ? parent->find(i) : nullptr) : (x->second.get());
 }
 
 Bounds Engine::bounds() {
@@ -134,11 +156,11 @@ Bounds Engine::bounds() {
 }
 
 void Engine::key(int key, int action) const {
-    app->engineKeyboard(key, action);
+    app->call(&Child::keyboard, key, action);
 }
 
 void Engine::click(int button, int action) const {
-    app->engineClick(button, action);
+    app->call(&Child::click, button, action);
 }
 
 void Engine::scale(int width, int height) const {
@@ -159,17 +181,19 @@ void Engine::execute() {
         glfwPollEvents();
 
         glClearColor(sky.red, sky.green, sky.blue, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         auto current = now();
 
-        app->engineUpdate(static_cast<float>(current - last) / 1000.0f);
+        app->call(&Child::update, static_cast<float>(current - last) / 1000.0f);
 
         glUseProgram(program);
         glUniform2f(offsetUniform, offsetX, offsetY);
 
         world.Step(1 / 60.0f, 6, 2);
-        app->engineDraw();
+
+        for (Child *d : drawList)
+            d->draw();
 
         last = current;
 
@@ -194,8 +218,6 @@ Engine::Engine(GLFWwindow *window, fs::path assets)
         reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window))->scale(width, height);
     });
 
-    glEnable(GL_DEPTH_TEST);
-
     program = loadShaderProgram(
         (this->assets / "shaders/vert.glsl").string(),
         (this->assets / "shaders/frag.glsl").string());
@@ -204,6 +226,9 @@ Engine::Engine(GLFWwindow *window, fs::path assets)
     scaleUniform = glGetUniformLocation(program, "scale");
     offsetUniform = glGetUniformLocation(program, "offset");
     assert(offsetUniform >= 0 && scaleUniform >= 0);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     int width, height;
     glfwGetWindowSize(window, &width, &height);

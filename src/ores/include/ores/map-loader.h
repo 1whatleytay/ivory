@@ -34,12 +34,14 @@ struct Object {
     float x, y;
 
     std::string type;
-    std::string color;
+    std::string team;
 };
 
 struct MapLoader {
     size_t width = 0, height = 0;
     size_t tileWidth = 0, tileHeight = 0;
+
+    int64_t playerLayer = -1;
 
     std::vector<Layer> layers;
     std::vector<Object> objects;
