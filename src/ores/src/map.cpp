@@ -131,7 +131,6 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
                     continue;
 
                 resources->player = make<Player>(o.team, o.x, o.y);
-                make<FontText>()->set("Hello World!", o.x, o.y);
 
                 if (loader.playerLayer != -1) {
                     resources->player->layerAfter(layers[loader.playerLayer]);

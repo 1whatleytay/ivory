@@ -5,6 +5,7 @@
 struct Font;
 struct Client;
 struct Player;
+struct Camera;
 struct Options;
 
 struct Resources : public Resource {
@@ -13,6 +14,7 @@ struct Resources : public Resource {
     Font *font = nullptr;
     Player *player = nullptr;
     Client *client = nullptr;
+    Camera *camera = nullptr;
 
     Resources(Child *component, const Options &options);
 };

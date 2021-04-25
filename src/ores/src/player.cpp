@@ -1,8 +1,10 @@
 #include <ores/player.h>
 
 #include <ores/flag.h>
+#include <ores/camera.h>
 #include <ores/client.h>
 #include <ores/capture.h>
+#include <ores/resources.h>
 #include <ores/asset-loader.h>
 
 #include <fmt/printf.h>
@@ -90,7 +92,11 @@ void Player::update(float time) {
             if (point && holdingFlag && holdingFlag->color != color && point->color == color) {
                 holdingFlag->reset(); // this will holdingFlag = nullptr for me :flushed:
 
-                fmt::print("Score for team {}!\n", color);
+                if (color == "red") {
+                    camera->leftScore++;
+                } else if (color == "blue") {
+                    camera->rightScore++;
+                }
             }
         }
 
@@ -186,6 +192,7 @@ void Player::click(int button, int action) {
 
 Player::Player(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
     client = find<Client>();
+    camera = find<Resources>()->camera;
 
     if (client) {
         x = client->hello.playerX;

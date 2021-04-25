@@ -112,6 +112,7 @@ struct Child {
     std::vector<std::unique_ptr<Resource>> resources;
     std::unordered_map<std::type_index, std::unique_ptr<Resource>> supplies;
 
+    void layerTop();
     void layerAfter(Child *e);
 
     virtual void draw();

@@ -1,7 +1,10 @@
 #include <ores/camera.h>
 
+#include <ores/font.h>
 #include <ores/player.h>
 #include <ores/resources.h>
+
+#include <fmt/format.h>
 
 void Camera::update(float time) {
     constexpr float speed = 20;
@@ -36,10 +39,13 @@ void Camera::update(float time) {
     }
 
     if (glfwGetKey(engine.window, GLFW_KEY_P) == GLFW_PRESS) {
-        engine.zoom *= 1.01;
+        engine.zoom /= 0.99;
 
         scale();
     }
+
+    leftScoreText->set(fmt::format("Red Score: {}", leftScore), -engine.offsetX - 4.6, -engine.offsetY - 3.4);
+    rightScoreText->set(fmt::format("Blue Score: {}", rightScore), -engine.offsetX - 4.6, -engine.offsetY - 3);
 }
 
 void Camera::keyboard(int key, int action) {
@@ -48,4 +54,7 @@ void Camera::keyboard(int key, int action) {
     }
 }
 
-Camera::Camera(Child *parent) : Child(parent), resources(find<Resources>()) { }
+Camera::Camera(Child *parent) : Child(parent), resources(find<Resources>()) {
+    leftScoreText = make<FontText>();
+    rightScoreText = make<FontText>();
+}

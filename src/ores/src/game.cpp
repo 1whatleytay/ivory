@@ -59,7 +59,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     supply<parts::Buffer>(600);
     supply<parts::Texture>(200, 200);
 
-    resources->font = supply<Font>(engine.assets / "fonts/Quicksand-Bold.ttf");
+    resources->font = supply<Font>(engine.assets / "fonts/Quicksand-Bold.ttf", 12);
 
     if (options.multiplayer) {
         try {
@@ -72,8 +72,11 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
         }
     }
 
-    make<Camera>();
+    resources->camera = make<Camera>();
     make<Map>((engine.assets / "maps" / options.map).string());
+
+    resources->camera->leftScoreText->layerTop();
+    resources->camera->rightScoreText->layerTop();
 }
 
 Game::~Game() {

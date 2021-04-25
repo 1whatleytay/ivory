@@ -48,7 +48,7 @@ struct Font : public Resource {
     FT_Library library = nullptr;
     FT_Face face = nullptr;
 
-    float pxToScreen = 1 / 48.0f;
+    float pxToScreen = 1 / 192.0f;
 
     parts::Texture *texture = nullptr;
 

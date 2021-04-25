@@ -98,6 +98,10 @@ Child::~Child() {
         list.erase(iterator);
 }
 
+void Child::layerTop() {
+    layerAfter(engine.drawList.back());
+}
+
 void Child::layerAfter(Child *e) {
     auto &list = engine.drawList;
 

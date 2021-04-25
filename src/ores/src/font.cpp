@@ -10,10 +10,11 @@ void FontText::set(const std::string &text, float x, float y) {
 
     std::vector<Vertex> data(text.size() * 6);
 
-    if (range)
+    if (range && range->size != data.size())
         range->parent->free(range);
 
-    range = get<parts::Buffer>(data.size())->grab(data.size());
+    if (!range)
+        range = get<parts::Buffer>(data.size())->grab(data.size());
 
     auto &index = font->supportedCharacters;
 

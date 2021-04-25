@@ -6,6 +6,7 @@
 
 struct Flag;
 struct Client;
+struct Camera;
 
 struct Player : public Child {
     parts::BoxBody *body = nullptr;
@@ -14,6 +15,7 @@ struct Player : public Child {
     std::string color;
 
     Client *client = nullptr;
+    Camera *camera = nullptr;
     Flag *holdingFlag = nullptr;
 
     bool flipX = false;
