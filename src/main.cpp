@@ -1,5 +1,5 @@
-#include <ores/game.h>
-#include <ores/options.h>
+#include <content/game.h>
+#include <content/options.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

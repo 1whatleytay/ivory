@@ -1,11 +1,9 @@
-#include <ores/player.h>
+#include <content/player.h>
 
-#include <ores/flag.h>
-#include <ores/camera.h>
-#include <ores/client.h>
-#include <ores/capture.h>
-#include <ores/resources.h>
-#include <ores/asset-loader.h>
+#include <content/camera.h>
+#include <content/client.h>
+#include <content/capture.h>
+#include <content/resources.h>
 
 #include <fmt/printf.h>
 
@@ -87,7 +85,7 @@ void Player::update(float time) {
     b2ContactEdge *edge = body->value->GetContactList();
 
     while (edge) {
-        std::any *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
+        auto *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
 
         if (r && r->has_value() && r->type() == typeid(Capture *)) {
             auto *point = std::any_cast<Capture *>(*r);
@@ -100,9 +98,9 @@ void Player::update(float time) {
                     client->write(messages::Capture { point->color });
 
                 if (color == "red") {
-                    camera->leftScore++;
+                    camera->redScore++;
                 } else if (color == "blue") {
-                    camera->rightScore++;
+                    camera->blueScore++;
                 }
             }
         }
@@ -147,7 +145,7 @@ void Player::keyboard(int key, int action) {
                 b2ContactEdge *edge = body->value->GetContactList();
 
                 while (edge) {
-                    std::any *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
+                    auto *r = reinterpret_cast<std::any *>(edge->other->GetUserData().pointer);
 
                     if (r && r->has_value() && r->type() == typeid(Flag *)) {
                         Flag *flag = std::any_cast<Flag *>(*r);
@@ -196,21 +194,6 @@ void Player::keyboard(int key, int action) {
         else
             setAnimation(idle, false);
     }
-}
-
-void Player::click(int button, int action) {
-//    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-//        double kX = 0, kY = 0;
-//        glfwGetCursorPos(engine.window, &kX, &kY);
-//
-//        int wW = 0, wH = 0;
-//        glfwGetWindowSize(engine.window, &wW, &wH);
-//
-//        double cX = (2 * (kX / wW) - 1) * ((wW / engine.zoom) / 2) - engine.offsetX;
-//        double cY = -(2 * (kY / wH) - 1) * ((wH / engine.zoom) / 2) - engine.offsetY;
-//
-//        body->value->SetTransform(b2Vec2(cX, cY), 0);
-//    }
 }
 
 std::pair<float, float> Player::flagPosition() {

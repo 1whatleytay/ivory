@@ -11,8 +11,8 @@ struct Camera : public Child {
 
     bool usePlayer = true;
 
-    int32_t leftScore = 0, rightScore = 0;
-    FontText *leftScoreText = nullptr, *rightScoreText = nullptr;
+    int32_t redScore = 0, blueScore = 0;
+    FontText *redScoreText = nullptr, *blueScoreText = nullptr;
 
     void update(float time) override;
     void keyboard(int key, int action) override;

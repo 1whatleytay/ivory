@@ -1,4 +1,4 @@
-#include <ores/capture.h>
+#include <content/capture.h>
 
 Capture::Capture(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
     b2BodyDef bDef;

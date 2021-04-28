@@ -2,8 +2,8 @@
 
 #include <engine/parts.h>
 
-#include <ores/flag.h>
-#include <ores/asset-loader.h>
+#include <content/flag.h>
+#include <content/asset-loader.h>
 
 struct Client;
 struct Camera;
@@ -11,6 +11,13 @@ struct Camera;
 struct Player : public Child, public FlagHoldable {
     parts::BoxBody *body = nullptr;
     parts::BoxVisual *visual = nullptr;
+
+    int health = 100;
+    float cd1 = 0.75;
+    float cd2 = 8;
+    float cd3 = 12;
+    float cd4 = 5;
+    float cd5 = 100;
 
     std::string color;
 
@@ -46,7 +53,6 @@ struct Player : public Child, public FlagHoldable {
 
     void update(float time) override;
     void keyboard(int key, int action) override;
-    void click(int button, int action) override;
 
     explicit Player(Child *parent, std::string color, float x = 0, float y = 0.5);
 };

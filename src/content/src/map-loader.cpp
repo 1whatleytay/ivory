@@ -1,6 +1,6 @@
-#include <ores/map-loader.h>
+#include <content/map-loader.h>
 
-#include <ores/assets.h>
+#include <content/assets.h>
 
 #include <pugixml.hpp>
 
@@ -143,13 +143,14 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
     for (const auto &g : map.children("objectgroup")) {
         for (const auto &o : g.children("object")) {
             std::string type, team;
+
             for (const auto &p : o.child("properties")) {
                 auto name = p.attribute("name").as_string();
                 auto value = p.attribute("value");
 
                 if (std::strcmp(name, "type") == 0)
                     type = value.as_string();
-                else if (std::strcmp(name, "team") == 0)
+                else if (std::strcmp(name, "color") == 0)
                     team = value.as_string();
                 else
                     throw std::exception();

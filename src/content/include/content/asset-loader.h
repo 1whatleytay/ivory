@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ores/assets.h>
+#include <content/assets.h>
 
 #include <string>
 #include <unordered_map>

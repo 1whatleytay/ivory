@@ -1,8 +1,8 @@
-#include <ores/camera.h>
+#include <content/camera.h>
 
-#include <ores/font.h>
-#include <ores/player.h>
-#include <ores/resources.h>
+#include <content/font.h>
+#include <content/player.h>
+#include <content/resources.h>
 
 #include <fmt/format.h>
 
@@ -44,8 +44,8 @@ void Camera::update(float time) {
         scale();
     }
 
-    leftScoreText->set(fmt::format("Red Score: {}", leftScore), -engine.offsetX - 4.6, -engine.offsetY - 3.4);
-    rightScoreText->set(fmt::format("Blue Score: {}", rightScore), -engine.offsetX - 4.6, -engine.offsetY - 3);
+    redScoreText->set(fmt::format("Red Score: {}", redScore), -engine.offsetX - 4.6, -engine.offsetY - 3.4);
+    blueScoreText->set(fmt::format("Blue Score: {}", blueScore), -engine.offsetX - 4.6, -engine.offsetY - 3);
 }
 
 void Camera::keyboard(int key, int action) {
@@ -55,6 +55,6 @@ void Camera::keyboard(int key, int action) {
 }
 
 Camera::Camera(Child *parent) : Child(parent), resources(find<Resources>()) {
-    leftScoreText = make<FontText>();
-    rightScoreText = make<FontText>();
+    redScoreText = make<FontText>();
+    blueScoreText = make<FontText>();
 }

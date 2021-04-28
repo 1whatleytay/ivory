@@ -1,12 +1,12 @@
-#include <ores/game.h>
+#include <content/game.h>
 
-#include <ores/map.h>
-#include <ores/font.h>
-#include <ores/camera.h>
-#include <ores/player.h>
-#include <ores/client.h>
-#include <ores/options.h>
-#include <ores/resources.h>
+#include <content/map.h>
+#include <content/font.h>
+#include <content/camera.h>
+#include <content/player.h>
+#include <content/client.h>
+#include <content/options.h>
+#include <content/resources.h>
 
 #include <fmt/printf.h>
 
@@ -30,8 +30,7 @@ void Game::update(float time) {
                 if (iterator == game.netPlayers.end()) {
                     player = game.make<NetPlayer>(m.playerId);
                     game.netPlayers.insert({ m.playerId, player });
-                }
-                else {
+                } else {
                     player = iterator->second;
                 }
 
@@ -57,6 +56,11 @@ void Game::update(float time) {
             void operator()(const messages::Capture &c) {
                 Flag *flag = game.resources->flags.at(c.color);
 
+                if (c.color == "blue")
+                    game.resources->camera->redScore++;
+                else if (c.color == "red")
+                    game.resources->camera->blueScore++;
+
                 flag->reset();
             }
 
@@ -80,10 +84,10 @@ void Game::update(float time) {
 Game::Game(Engine &engine, const Options &options) : Child(engine) {
     resources = supply<Resources>(options);
 
-    supply<parts::Buffer>(600);
+    supply<parts::Buffer>(1200);
     supply<parts::Texture>(200, 200);
 
-    resources->font = supply<Font>(engine.assets / "fonts/Quicksand-Bold.ttf", 12);
+    resources->font = supply<Font>((engine.assets / "fonts/Quicksand-Bold.ttf").string(), 12);
 
     if (options.multiplayer) {
         try {
@@ -101,8 +105,8 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     resources->camera = make<Camera>();
     make<Map>((engine.assets / "maps" / options.map).string());
 
-    resources->camera->leftScoreText->layerTop();
-    resources->camera->rightScoreText->layerTop();
+    resources->camera->redScoreText->layerTop();
+    resources->camera->blueScoreText->layerTop();
 }
 
 Game::~Game() {

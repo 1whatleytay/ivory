@@ -1,4 +1,4 @@
-#include <ores/net-player.h>
+#include <content/net-player.h>
 
 std::pair<float, float> NetPlayer::flagPosition() {
     return { x, y };

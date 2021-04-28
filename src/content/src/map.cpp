@@ -1,10 +1,10 @@
-#include <ores/map.h>
+#include <content/map.h>
 
-#include <ores/font.h>
-#include <ores/flag.h>
-#include <ores/player.h>
-#include <ores/capture.h>
-#include <ores/resources.h>
+#include <content/font.h>
+#include <content/flag.h>
+#include <content/player.h>
+#include <content/capture.h>
+#include <content/resources.h>
 
 #include <fmt/printf.h>
 

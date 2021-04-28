@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ores/net-player.h>
+#include <content/net-player.h>
 
 #include <engine/engine.h>
 
