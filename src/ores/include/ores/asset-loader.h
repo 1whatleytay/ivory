@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 struct TagInfo {
+    std::string name;
     size_t start = 0, end = 0;
 };
 

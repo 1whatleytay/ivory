@@ -2,7 +2,6 @@
 
 #include <server/options.h>
 
-#include <shared/blocks.h>
 #include <shared/messages.h>
 
 #include <asio.hpp>
@@ -48,14 +47,11 @@ struct Server {
 
     const Options &options;
 
-    blocks::Blocks blockList;
-    blocks::Indices blockIndices;
-
-    blocks::Blocks blocks;
-
     std::vector<std::unique_ptr<Connection>> connections;
 
     std::unique_ptr<tcp::socket> temp;
+
+    bool lastTeam = false;
 
     void accept(tcp::acceptor &acceptor);
 

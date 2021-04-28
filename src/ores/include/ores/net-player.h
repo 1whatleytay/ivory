@@ -2,11 +2,11 @@
 
 #include <engine/parts.h>
 
-#include <mutex>
+#include <ores/flag.h>
 
 struct Client;
 
-struct NetPlayer : public Child {
+struct NetPlayer : public Child, public FlagHoldable {
     float x, y;
     parts::BoxVisual *visual = nullptr;
 
@@ -15,6 +15,8 @@ struct NetPlayer : public Child {
     parts::TextureRange *range;
 
     bool hide = false;
+
+    std::pair<float, float> flagPosition() override;
 
     void update(float time) override;
 

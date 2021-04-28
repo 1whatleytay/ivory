@@ -2,27 +2,52 @@
 
 #include <ores/assets.h>
 #include <ores/player.h>
+#include <ores/resources.h>
 
 #include <fmt/format.h>
 
 void Flag::update(float time) {
-    auto pos = body->GetPosition();
+    if (holding) {
+        auto pos = holding->flagPosition();
 
-    if (holdingPlayer)
-        visual->set(pos.x, pos.y, 0.4f, 0.4f, *texture);
-    else
+        visual->set(pos.first, pos.second, 0.4f, 0.4f, *texture);
+    } else {
+        auto pos = body->GetPosition();
+
         visual->set(pos.x, pos.y, 1, 1, *texture);
+    }
 }
 
 void Flag::reset() {
-    holdingPlayer->holdingFlag = nullptr;
-    holdingPlayer = nullptr;
+    if (holding) {
+        holding->holding = nullptr;
+        holding = nullptr;
 
-    body->SetTransform(b2Vec2(spawnX, spawnY), 0);
+        body->SetTransform(b2Vec2(spawnX, spawnY), 0);
+    }
+}
+
+void Flag::pickUp(FlagHoldable *by) {
+    if (holding) {
+        auto pos = holding->flagPosition();
+
+        body->SetTransform(b2Vec2(pos.first, pos.second), 0);
+
+        holding->holding = nullptr;
+        holding = nullptr;
+    }
+
+    if (by) {
+        holding = by;
+        by->holding = this;
+    }
 }
 
 Flag::Flag(Child *parent, std::string color, float x, float y)
     : Child(parent), color(std::move(color)), spawnX(x), spawnY(y) {
+
+    Resources *resources = find<Resources>();
+    resources->flags[this->color] = this;
 
     texture = assets::load(*get<parts::Texture>(0, 0), fmt::format("images/objects/{}_flag.png", this->color));
 

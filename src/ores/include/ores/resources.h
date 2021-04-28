@@ -3,6 +3,7 @@
 #include <engine/engine.h>
 
 struct Font;
+struct Flag;
 struct Client;
 struct Player;
 struct Camera;
@@ -15,6 +16,8 @@ struct Resources : public Resource {
     Player *player = nullptr;
     Client *client = nullptr;
     Camera *camera = nullptr;
+
+    std::unordered_map<std::string, Flag *> flags;
 
     Resources(Child *component, const Options &options);
 };

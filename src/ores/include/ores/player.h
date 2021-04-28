@@ -2,13 +2,13 @@
 
 #include <engine/parts.h>
 
+#include <ores/flag.h>
 #include <ores/asset-loader.h>
 
-struct Flag;
 struct Client;
 struct Camera;
 
-struct Player : public Child {
+struct Player : public Child, public FlagHoldable {
     parts::BoxBody *body = nullptr;
     parts::BoxVisual *visual = nullptr;
 
@@ -16,7 +16,6 @@ struct Player : public Child {
 
     Client *client = nullptr;
     Camera *camera = nullptr;
-    Flag *holdingFlag = nullptr;
 
     bool flipX = false;
     const TagInfo *currentAnimation = nullptr;
@@ -33,6 +32,8 @@ struct Player : public Child {
     std::vector<parts::TextureRange *> frames;
 
     float netUpdateTime = 0;
+
+    std::pair<float, float> flagPosition() override;
 
     size_t netUpdateIndex = 0;
     static constexpr std::array netUpdates = { 0.05, 0.1, 0.2, 1.0, 0.0, 0.016 };

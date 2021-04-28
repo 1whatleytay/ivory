@@ -2,7 +2,15 @@
 
 #include <engine/parts.h>
 
-struct Player;
+struct Flag;
+
+struct FlagHoldable {
+    Flag *holding = nullptr;
+
+    virtual std::pair<float, float> flagPosition() = 0;
+
+    virtual ~FlagHoldable() = default;
+};
 
 struct Flag : public Child {
     std::string color;
@@ -15,9 +23,10 @@ struct Flag : public Child {
 
     float spawnX = 0, spawnY = 0;
 
-    void reset();
+    FlagHoldable *holding = nullptr;
 
-    Player *holdingPlayer = nullptr;
+    void reset();
+    void pickUp(FlagHoldable *by);
 
     void update(float time) override;
 

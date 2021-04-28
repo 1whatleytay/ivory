@@ -8,6 +8,8 @@ enum class MessageType {
     Error,
     Hello,
     Move,
+    Capture,
+    PickUp,
     Log,
     Disconnect
 };
@@ -28,20 +30,38 @@ struct Event {
 namespace messages {
     struct Hello : public Event {
         size_t playerId;
-        float playerX, playerY;
 
-        std::string map;
+        std::string color;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Hello() = default;
-        Hello(size_t playerId, float playerX, float playerY, std::string map);
+        Hello(size_t playerId, std::string color);
     };
 
     struct Move : public Event {
         size_t playerId;
+
+        float x, y;
+        float veloX, veloY;
+
+        std::string animation;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        Move() = default;
+        Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation);
+    };
+
+    struct PickUp : public Event {
+        bool letGo = false;
+
+        size_t playerId = 0;
+        std::string color;
 
         float x, y;
 
@@ -49,8 +69,19 @@ namespace messages {
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
-        Move() = default;
-        Move(size_t playerId, float x, float y);
+        PickUp() = default;
+        PickUp(bool letGo, size_t playerId, std::string color, float x, float y);
+    };
+
+    struct Capture : public Event {
+        std::string color;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        Capture() = default;
+        Capture(std::string color);
     };
 
     struct Log : public Event {
@@ -80,6 +111,8 @@ using Message = std::variant<
     messages::Hello,
     messages::Move,
     messages::Log,
+    messages::Capture,
+    messages::PickUp,
     messages::Disconnect
 >;
 

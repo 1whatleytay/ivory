@@ -8,6 +8,8 @@
 #include <ores/options.h>
 #include <ores/resources.h>
 
+#include <fmt/printf.h>
+
 void Game::update(float time) {
     if (resources->client) {
         std::lock_guard guard(resources->client->messagesMutex);
@@ -36,6 +38,28 @@ void Game::update(float time) {
                 player->x = m.x;
                 player->y = m.y;
             }
+
+            void operator()(const messages::PickUp &p) {
+                Flag *flag = game.resources->flags.at(p.color);
+
+                if (p.letGo) {
+                    flag->pickUp(nullptr);
+                } else {
+                    NetPlayer *player = game.netPlayers.at(p.playerId);
+
+                    flag->pickUp(player);
+                    flag->layerAfter(player);
+                }
+
+                flag->body->SetTransform(b2Vec2(p.x, p.y), 0);
+            }
+
+            void operator()(const messages::Capture &c) {
+                Flag *flag = game.resources->flags.at(c.color);
+
+                flag->reset();
+            }
+
             void operator()(const messages::Disconnect& d) {
                 assert(d.playerId != game.resources->client->hello.playerId);
 
@@ -63,6 +87,8 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
 
     if (options.multiplayer) {
         try {
+            fmt::print("Connecting to server, {}:{}...", options.address, options.port);
+
             resources->client = supply<Client>(options.address, std::to_string(options.port));
             clientThread = std::make_unique<std::thread>([this]() { resources->client->run(); });
 

@@ -51,25 +51,22 @@ void Connection::handle(const Message &message) {
         void operator()(const messages::Hello &h) { throw std::exception(); }
         void operator()(const messages::Disconnect &d) { throw std::exception(); }
 
+        void operator()(const messages::PickUp &p) {
+            assert(p.playerId == connection.playerId);
+
+            connection.announce(p);
+        }
+
+        void operator()(const messages::Capture &c) {
+            assert(c.color == connection.hello.color);
+
+            connection.announce(c);
+        }
+
         void operator()(const messages::Move &m) {
             assert(m.playerId == connection.playerId);
 
             connection.announce(m);
-        }
-
-        void operator()(const messages::Replace &r) {
-            if (connection.server.options.noBreak) {
-                fmt::print("Replace request by [{:0>4}], but no-break is enabled.\n");
-                return;
-            }
-
-            fmt::print("Replace request at {}, {} with {}.\n", r.x, r.y,
-                r.block < 0 ? "Nothing" : connection.server.blockList[r.block]->name);
-
-            connection.server.blocks[r.x + connection.server.options.worldWidth * r.y]
-                = r.block < 0 ? nullptr : connection.server.blockList[r.block];
-
-            connection.announce(r);
         }
 
         void operator()(const messages::Log &l) {
@@ -116,8 +113,8 @@ void Connection::listen() {
 
 Connection::Connection(size_t playerId, tcp::socket socket, Server &server, messages::Hello hello)
     : playerId(playerId), server(server), socket(std::move(socket)), hello(std::move(hello)) {
-    x = this->hello.playerX;
-    y = this->hello.playerY;
+    x = 0;
+    y = 0;
 }
 
 void Server::accept(tcp::acceptor &acceptor) {
@@ -129,10 +126,11 @@ void Server::accept(tcp::acceptor &acceptor) {
 
             size_t playerId = connections.size();
             connections.push_back(std::make_unique<Connection>(playerId, std::move(*temp), *this, messages::Hello {
-                connections.size(), 0.5f, 0.5f,
-                options.worldWidth, options.worldHeight,
-                blocks::encode(blocks, blockIndices)
+                connections.size(),
+                lastTeam ? "red" : "blue"
             }));
+
+            lastTeam = !lastTeam;
 
             fmt::print("New connection as [{:0>4}]\n", playerId);
 
@@ -146,7 +144,7 @@ void Server::accept(tcp::acceptor &acceptor) {
                     continue;
 
                 e->write(messages::Move {
-                    playerId, c.x, c.y
+                    playerId, c.x, c.y, 0, 0, "idle"
                 });
             }
         }
@@ -164,9 +162,4 @@ void Server::run() {
     context.run();
 }
 
-Server::Server(const Options &options) : options(options) {
-    blockList = blocks::getBlocks();
-    blockIndices = blocks::getIndices();
-
-    blocks = blocks::generate(options.worldWidth, options.worldHeight);
-}
+Server::Server(const Options &options) : options(options) { }

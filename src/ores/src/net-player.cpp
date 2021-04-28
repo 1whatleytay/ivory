@@ -1,5 +1,9 @@
 #include <ores/net-player.h>
 
+std::pair<float, float> NetPlayer::flagPosition() {
+    return { x, y };
+}
+
 void NetPlayer::update(float time) {
     if (visual)
         visual->set(x, y, 1, 1, *range);

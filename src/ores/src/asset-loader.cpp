@@ -34,7 +34,10 @@ AssetLoader::AssetLoader(const std::pair<std::string, std::string> &data, const 
     for (const auto &t : tagList) {
         assert(std::strcmp(t["direction"].GetString(), "forward") == 0);
 
-        tags[t["name"].GetString()] = {
+        std::string name = t["name"].GetString();
+
+        tags[name] = {
+            name,
             static_cast<size_t>(t["from"].GetInt64()),
             static_cast<size_t>(t["to"].GetInt64())
         };
