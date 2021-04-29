@@ -27,6 +27,7 @@ add_library(asio INTERFACE)
 target_include_directories(asio INTERFACE asio/asio/include)
 
 if (WIN32)
+    target_compile_definitions(asio INTERFACE _WIN32_WINDOWS)
     target_link_libraries(asio INTERFACE ws2_32 wsock32)
 endif()
 

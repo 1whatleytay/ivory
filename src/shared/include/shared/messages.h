@@ -4,7 +4,7 @@
 
 #include <variant>
 
-enum class MessageType {
+enum class MessageType : uint32_t {
     Error,
     Hello,
     Move,
@@ -15,9 +15,25 @@ enum class MessageType {
     Disconnect
 };
 
+struct Verify {
+    enum VerifyEnum { A, B, C };
+
+    size_t n = sizeof(Verify);
+
+    int8_t a = sizeof(int8_t);
+    int16_t b = sizeof(int16_t);
+    int32_t c = sizeof(int32_t);
+    int64_t d = sizeof(int64_t);
+    size_t x = sizeof(size_t);
+    VerifyEnum k = A;
+    size_t y = sizeof(VerifyEnum);
+
+    bool operator==(const Verify &v) const;
+};
+
 struct Container {
     MessageType type = MessageType::Error;
-    size_t size = 0;
+    uint64_t size = 0;
 };
 
 struct Event {

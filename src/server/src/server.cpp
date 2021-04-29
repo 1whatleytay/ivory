@@ -142,6 +142,25 @@ void Server::accept(tcp::acceptor &acceptor) {
 
             Connection &c = *connections[playerId];
 
+            auto buffer = std::make_unique<uint8_t[]>(sizeof(Verify));
+            auto ptr = buffer.get();
+
+            auto handle = [buffer = std::move(buffer)](asio::error_code error, size_t n) {
+                if (n != sizeof(Verify))
+                    throw std::exception();
+
+                auto *v = reinterpret_cast<Verify *>(buffer.get());
+                Verify k;
+
+                if (!(k == *v)) {
+                    throw std::exception();
+                } else {
+                    fmt::print("Player [{:0>4}] verified.\n");
+                }
+            };
+
+            asio::async_read(c.socket, asio::buffer(ptr, sizeof(Verify)), std::move(handle));
+
             c.write(c.hello);
             c.listen();
 

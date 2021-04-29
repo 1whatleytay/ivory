@@ -9,7 +9,7 @@ struct Options {
     std::string address = "127.0.0.1";
 
     std::string map = "map.tmx";
-    std::string font = "Quicksand-Bold.ttf";
+    std::string font = "m3x6.ttf";
 
     std::string assetsPath;
 
