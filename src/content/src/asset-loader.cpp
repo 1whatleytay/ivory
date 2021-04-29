@@ -4,13 +4,13 @@
 
 std::pair<size_t, size_t> AssetLoader::size() {
     if (frames.empty())
-        throw std::exception();
+        throw std::runtime_error("Tried to evaluate size of asset with no frames.");
 
     size_t w = frames.front().width, h = frames.front().height;
 
     for (const auto &f : frames) {
         if (f.width != w || f.height != h)
-            throw std::exception();
+            throw std::runtime_error("Inconsistent frame sizes for asset that needs singular frame size.");
     }
 
     return { w, h };

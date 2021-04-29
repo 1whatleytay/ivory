@@ -2,6 +2,7 @@
 
 #include <content/font.h>
 #include <content/flag.h>
+#include <content/client.h>
 #include <content/player.h>
 #include <content/capture.h>
 #include <content/resources.h>
@@ -81,8 +82,22 @@ void Map::makeBodies(const MapLoader &m) {
     }
 }
 
-Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(engine.world) {
-    Resources *resources = find<Resources>();
+void Map::addJoint(b2Body *body) {
+    b2FrictionJointDef jDef;
+    jDef.Initialize(body, frictionBody.get(), b2Vec2_zero);
+
+    jDef.maxForce = 10;
+    jDef.maxTorque = 0;
+
+    parts::JointPtr ptr(engine.world);
+
+    ptr.reset(engine.world.CreateJoint(&jDef));
+
+    frictionJoints.push_back(std::move(ptr));
+}
+
+Map::Map(Child *parent, const std::string &path) : Child(parent) {
+    auto *resources = find<Resources>();
 
     MapLoader loader(path, engine.assets.string());
 
@@ -124,9 +139,11 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
 
     assert(!resources->player);
 
+    std::string teamColor = resources->client ? resources->client->hello.color : "red";
+
     for (const auto &o : loader.objects) {
         if (o.type == "spawn") {
-            if (o.team == "red") {
+            if (o.team == teamColor) {
                 if (resources->player)
                     continue;
 
@@ -140,7 +157,7 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
             make<Flag>(o.team, o.x, o.y);
             make<Capture>(o.team, o.x, o.y);
         } else {
-            throw std::exception();
+            throw std::runtime_error(fmt::format("Unknown object type {}.", o.type));
         }
     }
 
@@ -160,13 +177,7 @@ Map::Map(Child *parent, const std::string &path) : Child(parent), frictionJoint(
 
     frictionBody->CreateFixture(&fDef);
 
-    b2FrictionJointDef jDef;
-    jDef.Initialize(resources->player->body->value, frictionBody.get(), b2Vec2_zero);
-
-    jDef.maxForce = 10;
-    jDef.maxTorque = 0;
-
-    frictionJoint.reset(engine.world.CreateJoint(&jDef));
+    addJoint(resources->player->body->value);
 
     makeBodies(loader);
 }

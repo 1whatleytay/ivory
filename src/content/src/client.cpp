@@ -17,7 +17,7 @@ void Client::write(const Event &event) {
         asio::error_code ec, std::size_t n
     ) {
         if (ec == asio::error::eof || n != fullSize)
-            throw std::exception();
+            throw std::runtime_error("Server disconnected.");
     });
 }
 
@@ -37,7 +37,7 @@ void Client::listenBody(const Container &container) {
 
     auto respond = [this, container, body = std::move(body)](asio::error_code e, size_t n) {
         if (e == asio::error::eof || n != container.size)
-            throw std::exception();
+            throw std::runtime_error("Server disconnected.");
 
         handle(parse(container, body.get()));
 
@@ -53,7 +53,7 @@ void Client::listen() {
 
     auto respond = [this, container = std::move(container)](asio::error_code e, size_t n) {
         if (e == asio::error::eof || n != sizeof(Container))
-            throw std::exception();
+            throw std::runtime_error("Server disconnected.");
         
         listenBody(*container);
     };

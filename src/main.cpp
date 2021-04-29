@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <boxer/boxer.h>
+
 #include <fmt/printf.h>
 
 int main(int count, const char **args) {
@@ -40,7 +42,13 @@ int main(int count, const char **args) {
         assets = "assets";
     }
 
-    std::make_unique<Engine>(window, assets)->run<Game>(options);
+    try {
+        std::make_unique<Engine>(window, assets)->run<Game>(options);
+    } catch (const std::runtime_error &e) {
+        boxer::show(e.what(), "Error", boxer::Style::Error);
+    } catch (const std::exception &e) {
+        boxer::show("An unknown error occurred.", "Error", boxer::Style::Error);
+    }
 
     glfwDestroyWindow(window);
     glfwTerminate();

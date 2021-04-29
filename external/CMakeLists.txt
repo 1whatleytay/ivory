@@ -14,6 +14,7 @@ set(CLI11_INSTALL OFF CACHE BOOL "Install the CLI11 folder to include during ins
 add_subdirectory(fmt)
 add_subdirectory(glad)
 add_subdirectory(glfw)
+add_subdirectory(Boxer)
 add_subdirectory(box2d)
 add_subdirectory(CLI11)
 add_subdirectory(pugixml)

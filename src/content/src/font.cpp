@@ -23,7 +23,7 @@ void FontText::set(const std::string &text, float x, float y) {
 
         auto entry = std::find(index.begin(), index.end(), c);
         if (entry == index.end())
-            throw std::exception();
+            throw std::runtime_error(fmt::format("Displaying character {} is unsupported.", c));
 
         FontCharacter &character = font->characters[std::distance(index.begin(), entry)];
 
@@ -58,7 +58,7 @@ Font::Font(Child *component, const std::string &path, float points) : Resource(c
     if (FT_Init_FreeType(&library)
         || FT_New_Face(library, path.c_str(), 0, &face)
         || FT_Set_Char_Size(face, points * 64, 0, dpi, 0))
-        throw std::exception();
+        throw std::runtime_error(fmt::format("Cannot load font at {}.", path));
 
     size_t cellSize = std::ceil(points / 72.0f * dpi);
 
@@ -72,7 +72,7 @@ Font::Font(Child *component, const std::string &path, float points) : Resource(c
 
         if (FT_Load_Glyph(face, i, 0)
             || FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL))
-            throw std::exception();
+            throw std::runtime_error(fmt::format("Cannot character {} for font.", c, path));
 
         auto width = face->glyph->bitmap.width;
         auto height = face->glyph->bitmap.rows;

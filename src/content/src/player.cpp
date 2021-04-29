@@ -17,10 +17,20 @@ void Player::setAnimation(const TagInfo &animation, bool flip) {
 }
 
 void Player::doMovement() {
+    if (dieTimeout > 0)
+        return;
+
     float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
     float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
-    constexpr float playerSpeed = 4.5;
+    float playerSpeed = 3;
+
+    if (holding) {
+        if (holding->color == color)
+            playerSpeed = 2;
+        else
+            playerSpeed = 2.5;
+    }
 
     b2Vec2 velo(x, y);
     velo.Normalize();
@@ -51,7 +61,7 @@ void Player::doNetwork(float time) {
     float timeToGo = netUpdates[netUpdateIndex % netUpdates.size()];
 
     auto pos = body->value->GetPosition();
-    auto velo = body->value->GetLinearVelocity();
+    auto velocity = body->value->GetLinearVelocity();
 
     netUpdateTime += time;
     if (netUpdateTime > timeToGo) {
@@ -65,9 +75,9 @@ void Player::doNetwork(float time) {
             client->hello.playerId,
 
             pos.x, pos.y,
-            velo.x, velo.y,
+            velocity.x, velocity.y,
 
-            currentAnimation->name
+            currentAnimation->name, flipX
         });
     }
 }
@@ -77,10 +87,7 @@ void Player::update(float time) {
     doAnimation(time);
     doNetwork(time);
 
-//    auto pos = body->value->GetPosition();
-
-//    if (holdingFlag)
-//        holdingFlag->body->SetTransform(b2Vec2(pos.x, pos.y + visualHeight * 1.5f), 0);
+    dieTimeout -= time;
 
     b2ContactEdge *edge = body->value->GetContactList();
 
@@ -92,10 +99,12 @@ void Player::update(float time) {
 
             // If player is holding a flag and the point is the player's point and
             if (point && holding && holding->color != color && point->color == color) {
+                std::string flagColor = holding->color;
+
                 holding->reset(); // this will holdingFlag = nullptr for me :flushed:
 
                 if (client)
-                    client->write(messages::Capture { point->color });
+                    client->write(messages::Capture { std::move(flagColor) });
 
                 if (color == "red") {
                     camera->redScore++;
@@ -111,14 +120,6 @@ void Player::update(float time) {
 
 void Player::keyboard(int key, int action) {
     if (action == GLFW_PRESS) {
-//        if (key == GLFW_KEY_R) {
-//            float x = client ? client->hello.playerX : 0;
-//            float y = client ? client->hello.playerY : 2;
-//
-//            body->value->SetTransform(b2Vec2(x, y), 0);
-//            body->value->SetAwake(true);
-//        }
-
         if (key == GLFW_KEY_U) {
             netUpdateIndex++;
         }
@@ -132,15 +133,17 @@ void Player::keyboard(int key, int action) {
         if (key == GLFW_KEY_F) {
             if (holding) {
                 if (client) {
-                    auto pos = flagPosition();
+                    Flag *flag = holding;
+
+                    holding->pickUp(nullptr);
+
+                    auto position = flag->body->GetPosition();
 
                     client->write(messages::PickUp {
-                        true, client->hello.playerId, holding->color,
-                        pos.first, pos.second
+                        true, client->hello.playerId, flag->color,
+                        position.x, position.y
                     });
                 }
-
-                holding->pickUp(nullptr);
             } else {
                 b2ContactEdge *edge = body->value->GetContactList();
 
@@ -196,6 +199,25 @@ void Player::keyboard(int key, int action) {
     }
 }
 
+void Player::die() {
+    dieTimeout = 5;
+
+    if (holding) {
+        Flag *flag = holding;
+
+        holding->pickUp(nullptr);
+
+        auto position = flag->body->GetPosition();
+
+        client->write(messages::PickUp {
+            true, client->hello.playerId, flag->color,
+            position.x, position.y
+        });
+    }
+
+    body->value->SetTransform(b2Vec2(spawnX, spawnY), 0);
+}
+
 std::pair<float, float> Player::flagPosition() {
     auto pos = body->value->GetPosition();
 
@@ -205,6 +227,9 @@ std::pair<float, float> Player::flagPosition() {
 Player::Player(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
     client = find<Client>();
     camera = find<Resources>()->camera;
+
+    spawnX = x;
+    spawnY = y;
 
     AssetLoader loader((engine.assets / "images/players/nate.json").string(), engine.assets.string());
 

@@ -8,7 +8,8 @@ struct Options {
     uint16_t port = 23788;
     std::string address = "127.0.0.1";
 
-    std::string map = "large.tmx";
+    std::string map = "map.tmx";
+    std::string font = "Quicksand-Bold.ttf";
 
     std::string assetsPath;
 

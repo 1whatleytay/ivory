@@ -58,7 +58,7 @@ void Connection::handle(const Message &message) {
         }
 
         void operator()(const messages::Capture &c) {
-            assert(c.color == connection.hello.color);
+            assert(c.color != connection.hello.color);
 
             connection.announce(c);
         }
@@ -67,6 +67,12 @@ void Connection::handle(const Message &message) {
             assert(m.playerId == connection.playerId);
 
             connection.announce(m);
+        }
+
+        void operator()(const messages::SetHealth &k) {
+            assert(k.playerId != connection.playerId);
+
+            connection.announce(k);
         }
 
         void operator()(const messages::Log &l) {
@@ -144,7 +150,7 @@ void Server::accept(tcp::acceptor &acceptor) {
                     continue;
 
                 e->write(messages::Move {
-                    playerId, c.x, c.y, 0, 0, "idle"
+                    playerId, c.x, c.y, 0, 0, "idle", false
                 });
             }
         }

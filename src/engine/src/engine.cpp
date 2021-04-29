@@ -15,7 +15,7 @@ namespace {
         auto getSource = [](const std::string &path) -> std::string {
             std::ifstream stream(path);
             if (!stream.is_open())
-                throw std::exception();
+                throw std::runtime_error(fmt::format("Could not find shader {}.", path));
 
             std::stringstream buffer;
             buffer << stream.rdbuf();
@@ -47,7 +47,7 @@ namespace {
 
                 fmt::print("Compile Error: {}\n", std::string(buffer.data(), length));
 
-                throw std::exception();
+                throw std::runtime_error("Failed to compile shader.");
             }
         };
 
@@ -73,7 +73,7 @@ namespace {
 
             fmt::print("Link Error: {}\n", std::string(buffer.data(), length));
 
-            throw std::exception();
+            throw std::runtime_error("Failed to link shaders.");
         }
 
         return program;

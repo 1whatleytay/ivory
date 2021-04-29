@@ -16,14 +16,15 @@ namespace messages {
     // messages::Move
     MessageType Move::type() const { return MessageType::Move; }
     void Move::read(Reader &reader) {
-        reader.read(playerId, x, y, veloX, veloY, animation);
+        reader.read(playerId, x, y, velocityX, velocityY, animation, flipX);
     }
     void Move::write(Writer &writer) const {
-        writer.write(playerId, x, y, veloX, veloY, animation);
+        writer.write(playerId, x, y, velocityX, velocityY, animation, flipX);
     }
 
-    Move::Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation)
-        : playerId(playerId), x(x), y(y), veloX(veloX), veloY(veloY), animation(std::move(animation)) { }
+    Move::Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX)
+        : playerId(playerId), x(x), y(y), velocityX(veloX), velocityY(veloY),
+        animation(std::move(animation)), flipX(flipX) { }
 
     MessageType PickUp::type() const { return MessageType::PickUp; }
     void PickUp::read(Reader &reader) {
@@ -45,6 +46,16 @@ namespace messages {
     }
 
     Capture::Capture(std::string color) : color(std::move(color)) { }
+
+    MessageType SetHealth::type() const { return MessageType::SetHealth; }
+    void SetHealth::read(Reader &reader) {
+        reader.read(playerId, dies);
+    }
+    void SetHealth::write(Writer &writer) const {
+        writer.write(playerId, dies);
+    }
+
+    SetHealth::SetHealth(size_t playerId, bool dies) : playerId(playerId), dies(dies) { }
 
     // messages::Log
     MessageType Log::type() const { return MessageType::Log; }
@@ -87,6 +98,8 @@ Message parse(const Container &container, const uint8_t *data) {
             return get<messages::PickUp>(reader);
         case MessageType::Capture:
             return get<messages::Capture>(reader);
+        case MessageType::SetHealth:
+            return get<messages::SetHealth>(reader);
         case MessageType::Log:
             return get<messages::Log>(reader);
         case MessageType::Disconnect:

@@ -19,15 +19,12 @@ TilesetLoader::TilesetLoader(const std::string &path, const std::string &parent,
 TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     pugi::xml_document doc;
     if (!doc.load_string(std::get<0>(data).c_str()))
-        throw std::exception();
+        throw std::runtime_error(fmt::format("Could not find map at {}.", std::get<0>(data)));
 
     auto tileset = doc.child("tileset");
 
     tileWidth = tileset.attribute("tilewidth").as_ullong();
     tileHeight = tileset.attribute("tileheight").as_ullong();
-
-//    size_t columns = tileset.attribute("columns").as_ullong();
-//    size_t tileCount = tileset.attribute("tilecount").as_ullong();
 
     auto image = tileset.child("image");
     imageData = assets::loadImage(assets::resolve({
@@ -54,7 +51,7 @@ TilesetLoader::TilesetLoader(const std::pair<std::string, std::string> &data, co
 
                 props.sneak = e.attribute("value").as_bool();
             } else {
-                throw std::exception();
+                throw std::runtime_error(fmt::format("Unknown property {} on tile.", propName));
             }
         }
     }
@@ -68,7 +65,7 @@ MapLoader::MapLoader(const std::string &name, const std::string &assets)
 MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std::string &assets) {
     pugi::xml_document doc;
     if (!doc.load_string(std::get<0>(data).c_str()))
-        throw std::exception();
+        throw std::runtime_error(fmt::format("Could not load map at {}.", std::get<0>(data)));
 
     auto map = doc.child("map");
 
@@ -150,14 +147,15 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
 
                 if (std::strcmp(name, "type") == 0)
                     type = value.as_string();
-                else if (std::strcmp(name, "color") == 0)
+                else if (std::strcmp(name, "team") == 0)
                     team = value.as_string();
                 else
-                    throw std::exception();
+                    throw std::runtime_error(fmt::format("Unknown jh ki,uattribute {} on object.", name));
             }
 
             objects.push_back({
-                o.attribute("x").as_float() / tileWidth, -o.attribute("y").as_float() / tileHeight,
+                o.attribute("x").as_float() / tileWidth + 0.5f,
+                -o.attribute("y").as_float() / tileHeight - 0.5f,
 
                 type, team
             });

@@ -24,7 +24,9 @@ struct Map : public Child {
     std::vector<Holder<parts::BoxBody>> bodies;
 
     parts::BodyPtr frictionBody;
-    parts::JointPtr frictionJoint;
+    std::vector<parts::JointPtr> frictionJoints;
+
+    void addJoint(b2Body *body);
 
     void makeBodies(const MapLoader &m);
 

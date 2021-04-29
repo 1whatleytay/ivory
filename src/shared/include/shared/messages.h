@@ -10,6 +10,7 @@ enum class MessageType {
     Move,
     Capture,
     PickUp,
+    SetHealth,
     Log,
     Disconnect
 };
@@ -29,7 +30,7 @@ struct Event {
 
 namespace messages {
     struct Hello : public Event {
-        size_t playerId;
+        size_t playerId = 0;
 
         std::string color;
 
@@ -42,19 +43,20 @@ namespace messages {
     };
 
     struct Move : public Event {
-        size_t playerId;
+        size_t playerId = 0;
 
-        float x, y;
-        float veloX, veloY;
+        float x = 0, y = 0;
+        float velocityX = 0, velocityY = 0;
 
         std::string animation;
+        bool flipX = false;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Move() = default;
-        Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation);
+        Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX);
     };
 
     struct PickUp : public Event {
@@ -63,7 +65,7 @@ namespace messages {
         size_t playerId = 0;
         std::string color;
 
-        float x, y;
+        float x = 0, y = 0;
 
         MessageType type() const override;
         void read(Reader &reader) override;
@@ -84,6 +86,19 @@ namespace messages {
         Capture(std::string color);
     };
 
+    struct SetHealth : public Event {
+        size_t playerId = 0;
+
+        bool dies = false;
+
+        MessageType type() const override;
+        void read(Reader &reader) override;
+        void write(Writer &writer) const override;
+
+        SetHealth() = default;
+        SetHealth(size_t playerId, bool dies);
+    };
+
     struct Log : public Event {
         std::string message;
 
@@ -96,14 +111,14 @@ namespace messages {
     };
 
     struct Disconnect : public Event {
-        size_t playerId;
+        size_t playerId = 0;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Disconnect() = default;
-        Disconnect(size_t playerId);
+        explicit Disconnect(size_t playerId);
     };
 }
 
@@ -113,6 +128,7 @@ using Message = std::variant<
     messages::Log,
     messages::Capture,
     messages::PickUp,
+    messages::SetHealth,
     messages::Disconnect
 >;
 

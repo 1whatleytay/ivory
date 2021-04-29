@@ -3,6 +3,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <fmt/format.h>
+
 #include <fstream>
 #include <sstream>
 
@@ -14,7 +16,7 @@ namespace assets {
         data.data.reset(stbi_load(path.c_str(), &data.width, &data.height, nullptr, 4));
 
         if (!data.data)
-            throw std::exception();
+            throw std::runtime_error(fmt::format("Could not load texture at {}.", path));
 
         return data;
     }
@@ -56,7 +58,7 @@ namespace assets {
                 return test;
         }
 
-        throw std::exception();
+        throw std::runtime_error(fmt::format("Could not resolve image {}.", std::get<0>(paths)));
     }
 
     std::pair<std::string, std::string> loadResolved(const Paths &paths) {

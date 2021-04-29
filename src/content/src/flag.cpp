@@ -31,7 +31,7 @@ void Flag::pickUp(FlagHoldable *by) {
     if (holding) {
         auto pos = holding->flagPosition();
 
-        body->SetTransform(b2Vec2(pos.first, pos.second), 0);
+        body->SetTransform(b2Vec2(pos.first, pos.second - 0.8f), 0);
 
         holding->holding = nullptr;
         holding = nullptr;
@@ -49,7 +49,7 @@ Flag::Flag(Child *parent, std::string color, float x, float y)
     auto *resources = find<Resources>();
     resources->flags[this->color] = this;
 
-    texture = assets::load(*get<parts::Texture>(0, 0), fmt::format("images/objects/{}_flag.png", this->color));
+    texture = assets::load(*get<parts::Texture>(), fmt::format("images/objects/{}_flag.png", this->color));
 
     visual = make<parts::BoxVisual>();
 

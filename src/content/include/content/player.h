@@ -9,15 +9,10 @@ struct Client;
 struct Camera;
 
 struct Player : public Child, public FlagHoldable {
+    float spawnX = 0, spawnY = 0;
+
     parts::BoxBody *body = nullptr;
     parts::BoxVisual *visual = nullptr;
-
-    int health = 100;
-    float cd1 = 0.75;
-    float cd2 = 8;
-    float cd3 = 12;
-    float cd4 = 5;
-    float cd5 = 100;
 
     std::string color;
 
@@ -39,6 +34,10 @@ struct Player : public Child, public FlagHoldable {
     std::vector<parts::TextureRange *> frames;
 
     float netUpdateTime = 0;
+
+    float dieTimeout = 0.0;
+
+    void die();
 
     std::pair<float, float> flagPosition() override;
 

@@ -13,6 +13,7 @@ Options::Options(int count, const char **args) {
     app.add_option("-a,--assets", assetsPath, "Path to assets");
 
     app.add_option("--map", map, "Map file name");
+    app.add_option("--font", font, "Game font to use.");
 
     try {
         app.parse(count, args);

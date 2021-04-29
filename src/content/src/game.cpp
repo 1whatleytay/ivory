@@ -28,14 +28,15 @@ void Game::update(float time) {
 
                 auto iterator = game.netPlayers.find(m.playerId);
                 if (iterator == game.netPlayers.end()) {
-                    player = game.make<NetPlayer>(m.playerId);
+                    player = game.make<NetPlayer>(m.playerId, m.x, m.y);
                     game.netPlayers.insert({ m.playerId, player });
+
+                    game.resources->map->addJoint(player->body->value);
                 } else {
                     player = iterator->second;
                 }
 
-                player->x = m.x;
-                player->y = m.y;
+                player->handle(m);
             }
 
             void operator()(const messages::PickUp &p) {
@@ -64,6 +65,15 @@ void Game::update(float time) {
                 flag->reset();
             }
 
+            void operator()(const messages::SetHealth &k) {
+                if (game.resources->client->hello.playerId == k.playerId) {
+                    game.resources->player->die();
+                }// else {
+//                    auto iterator = game.netPlayers.find(k.playerId);
+//                    assert(iterator != game.netPlayers.end());
+                //}
+            }
+
             void operator()(const messages::Disconnect& d) {
                 assert(d.playerId != game.resources->client->hello.playerId);
 
@@ -87,7 +97,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     supply<parts::Buffer>(1200);
     supply<parts::Texture>(200, 200);
 
-    resources->font = supply<Font>((engine.assets / "fonts/Quicksand-Bold.ttf").string(), 12);
+    resources->font = supply<Font>((engine.assets / "fonts" / options.font).string(), 12);
 
     if (options.multiplayer) {
         try {
@@ -103,7 +113,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     }
 
     resources->camera = make<Camera>();
-    make<Map>((engine.assets / "maps" / options.map).string());
+    resources->map = make<Map>((engine.assets / "maps" / options.map).string());
 
     resources->camera->redScoreText->layerTop();
     resources->camera->blueScoreText->layerTop();

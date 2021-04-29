@@ -177,17 +177,17 @@ namespace parts {
             range->write(data);
 
         auto *ptr = range.get();
-        children.push_back({ std::move(owned), std::move(range) });
+        children.emplace_back(std::move(owned), std::move(range));
 
         return ptr;
     }
 
     std::vector<TextureRange *> Texture::grabTileset(size_t w, size_t h) {
         if (std::any_of(taken.begin(), taken.end(), [](bool a) { return a; }))
-            throw std::exception();
+            throw std::runtime_error("Cannot split texture into tileset, space is already allocated.");
 
         if (width % w != 0 || height % h != 0)
-            throw std::exception();
+            throw std::runtime_error("Tileset must have consistent size.");
 
         std::vector<TextureRange *> result;
 
@@ -196,7 +196,7 @@ namespace parts {
                 auto range = std::make_unique<TextureRange>(this, x, y, w, h);
                 result.push_back(range.get());
 
-                children.push_back({ nullptr, std::move(range) });
+                children.emplace_back(nullptr, std::move(range));
             }
         }
 
