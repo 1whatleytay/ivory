@@ -18,15 +18,15 @@ enum class MessageType : uint32_t {
 struct Verify {
     enum VerifyEnum { A, B, C };
 
-    size_t n = sizeof(Verify);
+    int64_t n = sizeof(Verify);
 
     int8_t a = sizeof(int8_t);
     int16_t b = sizeof(int16_t);
     int32_t c = sizeof(int32_t);
     int64_t d = sizeof(int64_t);
-    size_t x = sizeof(size_t);
+    int64_t x = sizeof(size_t);
     VerifyEnum k = A;
-    size_t y = sizeof(VerifyEnum);
+    int64_t y = sizeof(VerifyEnum);
 
     bool operator==(const Verify &v) const;
 };
@@ -46,7 +46,7 @@ struct Event {
 
 namespace messages {
     struct Hello : public Event {
-        size_t playerId = 0;
+        int64_t playerId = 0;
 
         std::string color;
 
@@ -55,11 +55,11 @@ namespace messages {
         void write(Writer &writer) const override;
 
         Hello() = default;
-        Hello(size_t playerId, std::string color);
+        Hello(int64_t playerId, std::string color);
     };
 
     struct Move : public Event {
-        size_t playerId = 0;
+        int64_t playerId = 0;
 
         float x = 0, y = 0;
         float velocityX = 0, velocityY = 0;
@@ -72,13 +72,13 @@ namespace messages {
         void write(Writer &writer) const override;
 
         Move() = default;
-        Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX);
+        Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX);
     };
 
     struct PickUp : public Event {
         bool letGo = false;
 
-        size_t playerId = 0;
+        int64_t playerId = 0;
         std::string color;
 
         float x = 0, y = 0;
@@ -88,7 +88,7 @@ namespace messages {
         void write(Writer &writer) const override;
 
         PickUp() = default;
-        PickUp(bool letGo, size_t playerId, std::string color, float x, float y);
+        PickUp(bool letGo, int64_t playerId, std::string color, float x, float y);
     };
 
     struct Capture : public Event {
@@ -103,7 +103,7 @@ namespace messages {
     };
 
     struct SetHealth : public Event {
-        size_t playerId = 0;
+        int64_t playerId = 0;
 
         bool dies = false;
 
@@ -112,7 +112,7 @@ namespace messages {
         void write(Writer &writer) const override;
 
         SetHealth() = default;
-        SetHealth(size_t playerId, bool dies);
+        SetHealth(int64_t playerId, bool dies);
     };
 
     struct Log : public Event {
@@ -127,14 +127,14 @@ namespace messages {
     };
 
     struct Disconnect : public Event {
-        size_t playerId = 0;
+        int64_t playerId = 0;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Disconnect() = default;
-        explicit Disconnect(size_t playerId);
+        explicit Disconnect(int64_t playerId);
     };
 }
 

@@ -95,7 +95,7 @@ void NetPlayer::update(float time) {
     visual->set(pos.x, pos.y + visualHeight / 2, visualWidth, visualHeight, *frames[i], flipX);
 }
 
-NetPlayer::NetPlayer(Child *parent, size_t playerId, float x, float y) : Child(parent), playerId(playerId) {
+NetPlayer::NetPlayer(Child *parent, int64_t playerId, float x, float y) : Child(parent), playerId(playerId) {
     client = find<Client>();
 
     AssetLoader loader((engine.assets / "images/players/nate.json").string(), engine.assets.string());

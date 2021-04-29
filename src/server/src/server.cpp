@@ -117,7 +117,7 @@ void Connection::listen() {
     asio::async_read(socket, asio::buffer(ptr, sizeof(Container)), std::move(respond));
 }
 
-Connection::Connection(size_t playerId, tcp::socket socket, Server &server, messages::Hello hello)
+Connection::Connection(int64_t playerId, tcp::socket socket, Server &server, messages::Hello hello)
     : playerId(playerId), server(server), socket(std::move(socket)), hello(std::move(hello)) {
     x = 0;
     y = 0;
@@ -130,9 +130,9 @@ void Server::accept(tcp::acceptor &acceptor) {
         {
             std::lock_guard guard(mutex);
 
-            size_t playerId = connections.size();
+            int64_t playerId = connections.size();
             connections.push_back(std::make_unique<Connection>(playerId, std::move(*temp), *this, messages::Hello {
-                connections.size(),
+                static_cast<int64_t>(connections.size()),
                 lastTeam ? "red" : "blue"
             }));
 

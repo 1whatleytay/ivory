@@ -15,7 +15,7 @@ struct NetPlayer : public Child, public FlagHoldable {
 
     Client *client = nullptr;
 
-    size_t playerId = 0;
+    int64_t playerId = 0;
 
     bool flipX = false;
     const TagInfo *currentAnimation = nullptr;
@@ -45,5 +45,5 @@ struct NetPlayer : public Child, public FlagHoldable {
 
     void update(float time) override;
 
-    NetPlayer(Child *parent, size_t playerId, float x, float y);
+    NetPlayer(Child *parent, int64_t playerId, float x, float y);
 };

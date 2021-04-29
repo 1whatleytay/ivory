@@ -16,7 +16,7 @@ struct Server;
 struct Connection {
     std::mutex mutex;
 
-    size_t playerId;
+    int64_t playerId;
 
     Server &server;
     messages::Hello hello;
@@ -37,7 +37,7 @@ struct Connection {
     void listenBody(const Container &container);
     void listen();
 
-    Connection(size_t playerId, tcp::socket socket, Server &server, messages::Hello hello);
+    Connection(int64_t playerId, tcp::socket socket, Server &server, messages::Hello hello);
 };
 
 struct Server {

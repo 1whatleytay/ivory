@@ -14,7 +14,7 @@ namespace messages {
         reader.read(playerId,  color);
     }
 
-    Hello::Hello(size_t playerId, std::string color)
+    Hello::Hello(int64_t playerId, std::string color)
         : playerId(playerId),  color(std::move(color)) { }
 
     // messages::Move
@@ -26,7 +26,7 @@ namespace messages {
         writer.write(playerId, x, y, velocityX, velocityY, animation, flipX);
     }
 
-    Move::Move(size_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX)
+    Move::Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX)
         : playerId(playerId), x(x), y(y), velocityX(veloX), velocityY(veloY),
         animation(std::move(animation)), flipX(flipX) { }
 
@@ -38,7 +38,7 @@ namespace messages {
         writer.write(letGo, playerId, color, x, y);
     }
 
-    PickUp::PickUp(bool letGo, size_t playerId, std::string color, float x, float y)
+    PickUp::PickUp(bool letGo, int64_t playerId, std::string color, float x, float y)
         : letGo(letGo), playerId(playerId), color(std::move(color)), x(x), y(y) { }
 
     MessageType Capture::type() const { return MessageType::Capture; }
@@ -59,7 +59,7 @@ namespace messages {
         writer.write(playerId, dies);
     }
 
-    SetHealth::SetHealth(size_t playerId, bool dies) : playerId(playerId), dies(dies) { }
+    SetHealth::SetHealth(int64_t playerId, bool dies) : playerId(playerId), dies(dies) { }
 
     // messages::Log
     MessageType Log::type() const { return MessageType::Log; }
@@ -80,7 +80,7 @@ namespace messages {
         writer.write(playerId);
     }
 
-    Disconnect::Disconnect(size_t playerId) : playerId(playerId) { }
+    Disconnect::Disconnect(int64_t playerId) : playerId(playerId) { }
 }
 
 template <typename T>
