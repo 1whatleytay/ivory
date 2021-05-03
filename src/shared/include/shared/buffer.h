@@ -6,10 +6,12 @@
 #include <cstring>
 #include <stdexcept>
 
+#include <fmt/printf.h>
+
 struct Reader {
     const uint8_t *data = nullptr;
-    size_t index = 0;
-    size_t size = 0;
+    int64_t index = 0;
+    int64_t size = 0;
 
     template <typename T>
     void add(T &value) {
@@ -25,11 +27,12 @@ struct Reader {
     void add(std::vector<T> &value) {
         value.clear();
 
-        size_t length;
+        int64_t length;
         add(length);
+
         value.reserve(length);
 
-        for (size_t a = 0; a < length; a++) {
+        for (int64_t a = 0; a < length; a++) {
             T t;
             add(t);
 
@@ -40,7 +43,7 @@ struct Reader {
     void add(std::string &value) {
         value.clear();
 
-        size_t length;
+        int64_t length;
         add(length);
 
         value = std::string(reinterpret_cast<const char *>(&data[index]), length);
@@ -56,9 +59,9 @@ struct Reader {
         read(args...);
     }
 
-    size_t sizeLeft() const;
+    int64_t sizeLeft() const;
 
-    explicit Reader(const uint8_t *data, size_t size);
+    explicit Reader(const uint8_t *data, int64_t size);
     ~Reader();
 };
 
@@ -74,14 +77,14 @@ struct Writer {
 
     template <typename T>
     void add(const std::vector<T> &value) {
-        add(value.size());
+        add<int64_t>(value.size());
 
         for (const T &x : value)
             add(x);
     }
 
     void add(const std::string &value) {
-        add(value.size());
+        add<int64_t>(value.size());
 
         data.insert(data.end(), value.begin(), value.end());
     }

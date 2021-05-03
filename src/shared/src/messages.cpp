@@ -1,8 +1,8 @@
 #include <shared/messages.h>
 
-bool Verify::operator==(const Verify &v) const {
-    return n == v.n && a == v.a && b == v.b && c == v.c && d == v.d && x == v.x && k == v.k && y == v.y;
-}
+//bool Verify::operator==(const Verify &v) const {
+//    return n == v.n && a == v.a && b == v.b && c == v.c && d == v.d && x == v.x && k == v.k && y == v.y;
+//}
 
 namespace messages {
     // messages::Hello

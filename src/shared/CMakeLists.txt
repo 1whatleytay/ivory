@@ -6,4 +6,4 @@ add_library(shared STATIC
     src/messages.cpp)
 
 target_include_directories(shared PUBLIC include)
-target_link_libraries(shared PUBLIC stb)
+target_link_libraries(shared PUBLIC stb fmt)

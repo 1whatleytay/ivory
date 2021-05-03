@@ -48,14 +48,14 @@ void Client::listenBody(const Container &container) {
 }
 
 void Client::listen() {
-    auto verify = std::make_unique<Verify>();
-    auto verifyPtr = verify.get();
-    auto handle = [verify = std::move(verify)](asio::error_code e, size_t n) {
-        if (n != sizeof(Verify))
-            throw std::exception();
-    };
-
-    asio::async_write(socket, asio::buffer(verifyPtr, sizeof(Verify)), std::move(handle));
+//    auto verify = std::make_unique<Verify>();
+//    auto verifyPtr = verify.get();
+//    auto handle = [verify = std::move(verify)](asio::error_code e, size_t n) {
+//        if (n != sizeof(Verify))
+//            throw std::exception();
+//    };
+//
+//    asio::async_write(socket, asio::buffer(verifyPtr, sizeof(Verify)), std::move(handle));
 
     auto container = std::make_unique<Container>();
     auto *ptr = reinterpret_cast<uint8_t *>(container.get());

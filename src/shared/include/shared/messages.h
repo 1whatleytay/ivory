@@ -15,21 +15,21 @@ enum class MessageType : uint32_t {
     Disconnect
 };
 
-struct Verify {
-    enum VerifyEnum { A, B, C };
-
-    int64_t n = sizeof(Verify);
-
-    int8_t a = sizeof(int8_t);
-    int16_t b = sizeof(int16_t);
-    int32_t c = sizeof(int32_t);
-    int64_t d = sizeof(int64_t);
-    int64_t x = sizeof(size_t);
-    VerifyEnum k = A;
-    int64_t y = sizeof(VerifyEnum);
-
-    bool operator==(const Verify &v) const;
-};
+//struct Verify {
+//    enum VerifyEnum { A, B, C };
+//
+//    int64_t n = sizeof(Verify);
+//
+//    int8_t a = sizeof(int8_t);
+//    int16_t b = sizeof(int16_t);
+//    int32_t c = sizeof(int32_t);
+//    int64_t d = sizeof(int64_t);
+//    int64_t x = sizeof(size_t);
+//    VerifyEnum k = A;
+//    int64_t y = sizeof(VerifyEnum);
+//
+//    bool operator==(const Verify &v) const;
+//};
 
 struct Container {
     MessageType type = MessageType::Error;
