@@ -19,8 +19,11 @@ struct FrameInfo {
 struct AssetLoader {
     assets::ImageData image;
 
+    std::vector<TagInfo> tags;
     std::vector<FrameInfo> frames;
-    std::unordered_map<std::string, TagInfo> tags;
+
+    const TagInfo &findTag(const std::string &name) const;
+    const TagInfo &findTagIn(const std::string &name, const std::string &in) const;
 
     std::pair<size_t, size_t> size();
 

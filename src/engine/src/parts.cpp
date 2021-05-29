@@ -307,10 +307,9 @@ namespace parts {
         b->GetWorld()->DestroyBody(b);
     }) { }
 
-    JointPtr::JointPtr(b2World &w) : WorldPtr<b2Joint>(nullptr, [this](b2Joint *j) {
-        this->w.DestroyJoint(j);
-    }), w(w) { }
-
+    JointPtr::JointPtr() : WorldPtr<b2Joint>(nullptr, [](b2Joint *j) {
+        j->GetBodyA()->GetWorld()->DestroyJoint(j);
+    }) { }
 
     namespace shapes {
         std::array<Vertex, 6> square(float x, float y, float width, float height,

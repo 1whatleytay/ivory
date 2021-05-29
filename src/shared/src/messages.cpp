@@ -20,15 +20,14 @@ namespace messages {
     // messages::Move
     MessageType Move::type() const { return MessageType::Move; }
     void Move::read(Reader &reader) {
-        reader.read(playerId, x, y, velocityX, velocityY, animation, flipX);
+        reader.read(playerId, x, y, velocityX, velocityY, animation);
     }
     void Move::write(Writer &writer) const {
-        writer.write(playerId, x, y, velocityX, velocityY, animation, flipX);
+        writer.write(playerId, x, y, velocityX, velocityY, animation);
     }
 
-    Move::Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX)
-        : playerId(playerId), x(x), y(y), velocityX(veloX), velocityY(veloY),
-        animation(std::move(animation)), flipX(flipX) { }
+    Move::Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation)
+        : playerId(playerId), x(x), y(y), velocityX(veloX), velocityY(veloY), animation(std::move(animation)) { }
 
     MessageType PickUp::type() const { return MessageType::PickUp; }
     void PickUp::read(Reader &reader) {

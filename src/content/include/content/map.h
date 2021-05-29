@@ -31,4 +31,5 @@ struct Map : public Child {
     void makeBodies(const MapLoader &m);
 
     Map(Child *parent, const std::string &path);
+    ~Map();
 };

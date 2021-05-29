@@ -65,14 +65,13 @@ namespace messages {
         float velocityX = 0, velocityY = 0;
 
         std::string animation;
-        bool flipX = false;
 
         MessageType type() const override;
         void read(Reader &reader) override;
         void write(Writer &writer) const override;
 
         Move() = default;
-        Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation, bool flipX);
+        Move(int64_t playerId, float x, float y, float veloX, float veloY, std::string animation);
     };
 
     struct PickUp : public Event {

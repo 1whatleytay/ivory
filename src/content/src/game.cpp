@@ -97,7 +97,7 @@ Game::Game(Engine &engine, const Options &options) : Child(engine) {
     supply<parts::Buffer>(1200);
     supply<parts::Texture>(200, 200);
 
-    resources->font = supply<Font>((engine.assets / "fonts" / options.font).string(), 12);
+    resources->font = supply<Font>((engine.assets / "fonts" / options.font).string(), 24);
 
     if (options.multiplayer) {
         try {

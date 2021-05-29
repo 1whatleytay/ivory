@@ -89,7 +89,7 @@ void Map::addJoint(b2Body *body) {
     jDef.maxForce = 10;
     jDef.maxTorque = 0;
 
-    parts::JointPtr ptr(engine.world);
+    parts::JointPtr ptr;
 
     ptr.reset(engine.world.CreateJoint(&jDef));
 
@@ -180,4 +180,8 @@ Map::Map(Child *parent, const std::string &path) : Child(parent) {
     addJoint(resources->player->body->value);
 
     makeBodies(loader);
+}
+
+Map::~Map() {
+    frictionJoints.clear();
 }

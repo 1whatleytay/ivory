@@ -13,6 +13,7 @@ add_library(content STATIC
     include/content/flag.h
     include/content/map.h
     include/content/capture.h
+    include/content/player-base.h
 
     src/game.cpp
     src/flag.cpp
@@ -27,7 +28,8 @@ add_library(content STATIC
     src/map-loader.cpp
     src/resources.cpp
     src/map.cpp
-    src/capture.cpp)
+    src/capture.cpp
+    src/player-base.cpp)
 
 target_include_directories(content PUBLIC include)
 target_link_libraries(content PUBLIC engine shared asio CLI11 pugixml rapidjson freetype)

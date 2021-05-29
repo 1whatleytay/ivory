@@ -127,9 +127,7 @@ namespace parts {
     };
 
     struct JointPtr : WorldPtr<b2Joint> {
-        b2World &w;
-
-        JointPtr(b2World &w);
+        JointPtr();
     };
 
     namespace shapes {

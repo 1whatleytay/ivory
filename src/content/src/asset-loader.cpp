@@ -2,6 +2,32 @@
 
 #include <rapidjson/document.h>
 
+#include <fmt/format.h>
+
+const TagInfo &AssetLoader::findTag(const std::string &name) const {
+    auto iterator = std::find_if(tags.begin(), tags.end(), [&name](const auto &tag) {
+        return tag.name == name;
+    });
+
+    if (iterator == tags.end())
+        throw std::runtime_error(fmt::format("Missing tag {} on asset.", name));
+
+    return *iterator;
+}
+
+const TagInfo &AssetLoader::findTagIn(const std::string &name, const std::string &in) const {
+    const TagInfo &parent = findTag(in);
+
+    auto iterator = std::find_if(tags.begin(), tags.end(), [&name, &parent](const auto &tag) {
+        return tag.name == name && parent.start <= tag.start && parent.end >= tag.end;
+    });
+
+    if (iterator == tags.end())
+        throw std::runtime_error(fmt::format("Missing tag {} on asset (in {}).", name, in));
+
+    return *iterator;
+}
+
 std::pair<size_t, size_t> AssetLoader::size() {
     if (frames.empty())
         throw std::runtime_error("Tried to evaluate size of asset with no frames.");
@@ -36,11 +62,11 @@ AssetLoader::AssetLoader(const std::pair<std::string, std::string> &data, const 
 
         std::string name = t["name"].GetString();
 
-        tags[name] = {
+        tags.push_back({
             name,
             static_cast<size_t>(t["from"].GetInt64()),
             static_cast<size_t>(t["to"].GetInt64())
-        };
+        });
     }
 
     auto frameList = doc["frames"].GetArray();

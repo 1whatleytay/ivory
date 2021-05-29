@@ -16,6 +16,13 @@
 namespace fs = std::filesystem;
 
 struct Child;
+struct Bounds;
+
+struct Position {
+    float x, y;
+
+    bool within(const Bounds &bounds) const;
+};
 
 struct Bounds {
     float x, y;
@@ -27,6 +34,9 @@ struct Engine {
 
     GLFWwindow *window = nullptr;
     b2World world;
+
+    float physicsUpdateTime = 0;
+    static constexpr float physicsUpdateInterval = 1 / 60.0f;
 
     Handle program;
 
@@ -42,7 +52,8 @@ struct Engine {
     float zoom = 80;
     float offsetX = 0, offsetY = 0;
 
-    Bounds bounds();
+    Bounds bounds() const;
+    Position cursor() const;
 
     void key(int key, int action) const;
     void scale(int width, int height) const;

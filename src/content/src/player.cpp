@@ -7,29 +7,33 @@
 
 #include <fmt/printf.h>
 
-void Player::setAnimation(const TagInfo &animation, bool flip) {
-    if (&animation != currentAnimation || flip != flipX) {
-        currentAnimation = &animation;
-        currentFrame = 0;
-    }
+void Player::revertAnimation() {
+    int x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
+    int y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
-    flipX = flip;
+    if (x == 0 && y == 0)
+        pickAnimation(idle);
+    else
+        pickAnimation(walk, selectLinearDirection(x, y));
 }
 
 void Player::doMovement() {
-    if (dieTimeout > 0)
-        return;
-
     float x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
     float y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
 
-    float playerSpeed = 3;
+    if (x != 0 || y != 0)
+        direction = selectLinearDirection(x, y);
+
+    if (dieTimeout > 0 || isLocked)
+        return;
+
+    float playerSpeed = 5;
 
     if (holding) {
         if (holding->color == color)
-            playerSpeed = 2;
+            playerSpeed = 3;
         else
-            playerSpeed = 2.5;
+            playerSpeed = 3.5;
     }
 
     b2Vec2 velo(x, y);
@@ -37,22 +41,6 @@ void Player::doMovement() {
     velo *= playerSpeed;
 
     body->value->SetLinearVelocity(velo);
-}
-
-void Player::doAnimation(float time) {
-    constexpr float frameDuration = 0.1;
-    frameUpdateTime += time;
-
-    while (frameUpdateTime > frameDuration) {
-        currentFrame++;
-        frameUpdateTime -= frameDuration;
-    }
-
-    size_t i = currentFrame % (currentAnimation->end - currentAnimation->start + 1) + currentAnimation->start;
-
-    auto pos = body->value->GetPosition();
-
-    visual->set(pos.x, pos.y + visualHeight / 2, visualWidth, visualHeight, *frames[i], flipX);
 }
 
 void Player::doNetwork(float time) {
@@ -77,15 +65,16 @@ void Player::doNetwork(float time) {
             pos.x, pos.y,
             velocity.x, velocity.y,
 
-            currentAnimation->name, flipX
+            currentAnimation->name
         });
     }
 }
 
 void Player::update(float time) {
     doMovement();
-    doAnimation(time);
     doNetwork(time);
+
+    PlayerBase::update(time);
 
     dieTimeout -= time;
 
@@ -118,27 +107,87 @@ void Player::update(float time) {
     }
 }
 
+void Player::click(int button, int action) {
+    if (action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_1 && !isPunching) {
+            auto pos = body->value->GetPosition();
+
+            direction = selectDirection(Position { pos.x, pos.y }, engine.cursor());
+
+            auto doIdle = [this]() {
+                isLocked = false;
+                revertAnimation();
+            };
+
+            auto doEnd = [this, doIdle]() {
+                isPunching = false;
+                pickAnimation(punch.end, doIdle);
+            };
+
+            auto doRecoil = [this, doEnd]() {
+                pickAnimation(punch.recoil, doEnd);
+            };
+
+            auto doWindup = [this, doRecoil]() {
+                pickAnimation(punch.windup, doRecoil);
+            };
+
+            isLocked = true;
+            isPunching = true;
+            pickAnimation(punch.start, doWindup);
+        }
+    }
+}
+
 void Player::keyboard(int key, int action) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_U) {
             netUpdateIndex++;
         }
 
-        if (key == GLFW_KEY_A)
-            left = true;
-        if (key == GLFW_KEY_D)
-            left = false;
+//        if (key == GLFW_KEY_W)
+//            direction = Direction::Up;
+//        if (key == GLFW_KEY_S)
+//            direction = Direction::Down;
+//        if (key == GLFW_KEY_A)
+//            direction = Direction::Left;
+//        if (key == GLFW_KEY_D)
+//            direction = Direction::Right;
+
+        if (key == GLFW_KEY_K && !isPunching) {
+            auto doIdle = [this]() {
+                isLocked = false;
+                revertAnimation();
+            };
+
+            auto doEnd = [this, doIdle]() {
+                isPunching = false;
+                pickAnimation(punch.end, doIdle);
+            };
+
+            auto doRecoil = [this, doEnd]() {
+                pickAnimation(punch.recoil, doEnd);
+            };
+
+            auto doWindup = [this, doRecoil]() {
+                pickAnimation(punch.windup, doRecoil);
+            };
+
+            isLocked = true;
+            isPunching = true;
+            pickAnimation(punch.start, doWindup);
+        }
 
         // Interact
         if (key == GLFW_KEY_F) {
             if (holding) {
+                Flag *flag = holding;
+
+                holding->pickUp(nullptr);
+
+                auto position = flag->body->GetPosition();
+
                 if (client) {
-                    Flag *flag = holding;
-
-                    holding->pickUp(nullptr);
-
-                    auto position = flag->body->GetPosition();
-
                     client->write(messages::PickUp {
                         true, client->hello.playerId, flag->color,
                         position.x, position.y
@@ -161,7 +210,7 @@ void Player::keyboard(int key, int action) {
 
                                 client->write(messages::PickUp {
                                     false, client->hello.playerId, flag->color,
-                                    pos.first, pos.second
+                                    pos.x, pos.y
                                 });
                             }
                         }
@@ -180,22 +229,8 @@ void Player::keyboard(int key, int action) {
             || key == GLFW_KEY_S;
     };
 
-    if (action != GLFW_REPEAT && isMovementKey()) {
-        int x = glfwGetKey(engine.window, GLFW_KEY_D) - glfwGetKey(engine.window, GLFW_KEY_A);
-        int y = glfwGetKey(engine.window, GLFW_KEY_W) - glfwGetKey(engine.window, GLFW_KEY_S);
-
-        if (x > 0)
-            setAnimation(walk, false);
-        else if (x < 0)
-            setAnimation(walk, true);
-        else if (y > 0)
-            setAnimation(walkUp, false);
-        else if (y < 0)
-            setAnimation(walkDown, false);
-        else if (left)
-            setAnimation(idle, true);
-        else
-            setAnimation(idle, false);
+    if (action != GLFW_REPEAT && isMovementKey() && !isLocked) {
+        revertAnimation();
     }
 }
 
@@ -218,43 +253,10 @@ void Player::die() {
     body->value->SetTransform(b2Vec2(spawnX, spawnY), 0);
 }
 
-std::pair<float, float> Player::flagPosition() {
-    auto pos = body->value->GetPosition();
-
-    return { pos.x, pos.y + visualHeight * 1.5f };
-}
-
-Player::Player(Child *parent, std::string color, float x, float y) : Child(parent), color(std::move(color)) {
+Player::Player(Child *parent, std::string color, float x, float y) : PlayerBase(parent, x, y), color(std::move(color)) {
     client = find<Client>();
     camera = find<Resources>()->camera;
 
     spawnX = x;
     spawnY = y;
-
-    AssetLoader loader((engine.assets / "images/players/nate.json").string(), engine.assets.string());
-
-    auto size = loader.size();
-
-    auto tex = assemble<parts::Texture>(loader.image.width, loader.image.height, loader.image.data.get());
-    frames.resize(loader.frames.size());
-    for (size_t a = 0; a < loader.frames.size(); a++) {
-        const FrameInfo &info = loader.frames[a];
-
-        frames[a] = tex->grab(info.x, info.y, info.width, info.height);
-    }
-
-    idle = loader.tags.at("idle");
-    walk = loader.tags.at("walk");
-    walkUp = loader.tags.at("walk up");
-    walkDown = loader.tags.at("walk down");
-
-    setAnimation(idle, false);
-
-    constexpr float targetHeight = 0.75;
-
-    visualHeight = targetHeight;
-    visualWidth = targetHeight / size.second * size.first;
-
-    visual = make<parts::BoxVisual>();
-    body = make<parts::BoxBody>(x, y, visualWidth, visualHeight / 2, 1);
 }

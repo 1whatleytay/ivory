@@ -4,11 +4,11 @@
 
 struct Flag;
 
+// This could probably just be PlayerBase now...
 struct FlagHoldable {
     Flag *holding = nullptr;
 
-    virtual std::pair<float, float> flagPosition() = 0;
-
+    virtual Position flagPosition() = 0;
     virtual ~FlagHoldable() = default;
 };
 

@@ -80,6 +80,11 @@ namespace {
     }
 }
 
+bool Position::within(const Bounds &bounds) const {
+    return x >= bounds.x - bounds.width / 2 && y <= bounds.x + bounds.width / 2
+        && y >= bounds.y - bounds.height / 2 && y <= bounds.y + bounds.height / 2;
+}
+
 Resource::Resource(Child *component) : component(component) { }
 
 Child::Child(Engine &engine) : engine(engine) {
@@ -146,7 +151,7 @@ Resource *Child::find(std::type_index i) {
     return x == supplies.end() ? (parent ? parent->find(i) : nullptr) : (x->second.get());
 }
 
-Bounds Engine::bounds() {
+Bounds Engine::bounds() const {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
@@ -157,6 +162,19 @@ Bounds Engine::bounds() {
         -screenWidth / 2 - offsetX, screenHeight / 2 - offsetY,
         screenWidth, screenHeight
     };
+}
+
+Position Engine::cursor() const {
+    double kX = 0, kY = 0;
+    glfwGetCursorPos(window, &kX, &kY);
+
+    int wW = 0, wH = 0;
+    glfwGetWindowSize(window, &wW, &wH);
+
+    float cX = (2 * (kX / wW) - 1) * ((wW / zoom) / 2) - offsetX;
+    float cY = -(2 * (kY / wH) - 1) * ((wH / zoom) / 2) - offsetY;
+
+    return { cX, cY };
 }
 
 void Engine::key(int key, int action) const {
@@ -189,12 +207,18 @@ void Engine::execute() {
 
         auto current = now();
 
-        app->call(&Child::update, static_cast<float>(current - last) / 1000.0f);
+        float deltaTime = static_cast<float>(current - last) / 1000.0f;
+        app->call(&Child::update, deltaTime);
+
+        physicsUpdateTime += deltaTime;
+
+        while (physicsUpdateTime > physicsUpdateInterval) {
+            world.Step(physicsUpdateInterval, 6, 2);
+            physicsUpdateTime -= physicsUpdateInterval;
+        }
 
         glUseProgram(program);
         glUniform2f(offsetUniform, offsetX, offsetY);
-
-        world.Step(1 / 60.0f, 6, 2);
 
         for (Child *d : drawList)
             d->draw();

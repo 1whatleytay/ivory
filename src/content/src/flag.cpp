@@ -10,7 +10,7 @@ void Flag::update(float time) {
     if (holding) {
         auto pos = holding->flagPosition();
 
-        visual->set(pos.first, pos.second, 0.35f, 0.35f, *texture);
+        visual->set(pos.x, pos.y, 0.35f, 0.35f, *texture);
     } else {
         auto pos = body->GetPosition();
 
@@ -31,7 +31,7 @@ void Flag::pickUp(FlagHoldable *by) {
     if (holding) {
         auto pos = holding->flagPosition();
 
-        body->SetTransform(b2Vec2(pos.first, pos.second - 0.8f), 0);
+        body->SetTransform(b2Vec2(pos.x, pos.y - 0.8f), 0);
 
         holding->holding = nullptr;
         holding = nullptr;
