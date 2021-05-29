@@ -150,12 +150,12 @@ MapLoader::MapLoader(const std::pair<std::string, std::string> &data, const std:
                 else if (std::strcmp(name, "team") == 0)
                     team = value.as_string();
                 else
-                    throw std::runtime_error(fmt::format("Unknown jh ki,uattribute {} on object.", name));
+                    throw std::runtime_error(fmt::format("Unknown attribute {} on object.", name));
             }
 
             objects.push_back({
-                o.attribute("x").as_float() / tileWidth + 0.5f,
-                -o.attribute("y").as_float() / tileHeight - 0.5f,
+                o.attribute("x").as_float() / tileWidth,
+                -o.attribute("y").as_float() / tileHeight,
 
                 type, team
             });

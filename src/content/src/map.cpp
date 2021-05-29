@@ -144,20 +144,23 @@ Map::Map(Child *parent, const std::string &path) : Child(parent) {
     for (const auto &o : loader.objects) {
         if (o.type == "spawn") {
             if (o.team == teamColor) {
-                if (resources->player)
-                    continue;
+                if (!resources->player) {
+                    resources->player = make<Player>(o.team, o.x, o.y);
 
-                resources->player = make<Player>(o.team, o.x, o.y);
-
-                if (loader.playerLayer != -1) {
-                    resources->player->layerAfter(layers[loader.playerLayer]);
+                    if (loader.playerLayer != -1) {
+                        resources->player->layerAfter(layers[loader.playerLayer]);
+                    }
                 }
+
+                make<parts::BoxVisual>()->set(
+                    o.x, o.y, resources->player->body->width, resources->player->body->height,
+                    *find<parts::Texture>()->grab(1, 1, Color(0xFF0000).data().data()));
             }
         } else if (o.type == "flag") {
             make<Flag>(o.team, o.x, o.y);
             make<Capture>(o.team, o.x, o.y);
         } else {
-            throw std::runtime_error(fmt::format("Unknown object type {}.", o.type));
+//            throw std::runtime_error(fmt::format("Unknown object type {}.", o.type));
         }
     }
 

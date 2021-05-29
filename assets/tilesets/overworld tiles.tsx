@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.4" tiledversion="1.4.3" name="overworld_tiles" tilewidth="16" tileheight="16" tilecount="256" columns="16">
+<tileset version="1.4" tiledversion="1.4.3" name="overworld tiles" tilewidth="16" tileheight="16" tilecount="256" columns="16">
  <image source="overworld tiles.png" width="256" height="256"/>
  <tile id="0">
   <properties>
@@ -58,6 +58,7 @@
  </tile>
  <tile id="11">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -123,21 +124,25 @@
  </tile>
  <tile id="24">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="25">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="26">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="27">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -213,11 +218,13 @@
  </tile>
  <tile id="42">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="43">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -303,7 +310,7 @@
  </tile>
  <tile id="60">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="61">
@@ -913,36 +920,43 @@
  </tile>
  <tile id="182">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="183">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="184">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="185">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="186">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="187">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="188">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -988,41 +1002,49 @@
  </tile>
  <tile id="197">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="198">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="199">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="200">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="201">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="202">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="203">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="204">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -1043,17 +1065,17 @@
  </tile>
  <tile id="208">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="209">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="210">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="211">
@@ -1103,6 +1125,7 @@
  </tile>
  <tile id="220">
   <properties>
+   <property name="sneak" type="bool" value="true"/>
    <property name="solid" type="bool" value="false"/>
   </properties>
  </tile>
@@ -1123,17 +1146,17 @@
  </tile>
  <tile id="224">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="225">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="226">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="227">
@@ -1203,17 +1226,17 @@
  </tile>
  <tile id="240">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="241">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="242">
   <properties>
-   <property name="solid" type="bool" value="false"/>
+   <property name="solid" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="243">

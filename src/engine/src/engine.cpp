@@ -186,6 +186,8 @@ void Engine::click(int button, int action) const {
 }
 
 void Engine::scale(int width, int height) const {
+    glViewport(0, 0, width * 2, height * 2);
+
     glUniform2f(scaleUniform, static_cast<float>(width) / zoom, static_cast<float>(height) / zoom);
 }
 
